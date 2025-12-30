@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How's Hudson | Adventure Dog Blog</title>
+    <link rel="icon" type="image/png" href="Dog.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fjalla+One&family=Lora:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+        
+        h1, h2, h3, h4, .heading-font {
+            font-family: 'Fjalla One', sans-serif;
+            letter-spacing: 0.05em;
+        }
+        body {
+            font-family: 'Lora', serif;
+            scroll-behavior: smooth;
+        }
+        
+        /* Custom scrollbar for modals */
+        .modal-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+        .modal-scroll::-webkit-scrollbar-track {
+            background: #C9B49E;
+        }
+        .modal-scroll::-webkit-scrollbar-thumb {
+            background: #4E3629;
+            border-radius: 4px;
+        }
+        .modal-scroll::-webkit-scrollbar-thumb:hover {
+            background: #36251b;
+        }
+    </style>
+</head>
+<body class="text-gray-900 bg-[#C9B49E]">
+
+    <div id="page-loader" class="fixed inset-0 z-[100] bg-[#C9B49E] flex flex-col justify-center items-center transition-opacity duration-700 ease-out">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-[#4E3629] mb-4"></div>
+        <h2 class="heading-font text-[#4E3629] text-xl tracking-widest animate-pulse">Loading Adventure...</h2>
+    </div>
+
+    <nav class="bg-[#4E3629] sticky top-0 z-50 border-b border-[#36251b] shadow-[0_10px_15px_-3px_rgba(0,0,0,0.3)]">
+        <div class="max-w-[95%] mx-auto px-6">
+            <div class="flex justify-between items-center h-24">
+                <div class="flex-shrink-0 flex items-center">
+                    <a href="#" class="heading-font text-3xl text-[#E6DCD2] uppercase tracking-widest hover:text-white transition">
+                        How's Hudson
+                    </a>
+                </div>
+                <div class="hidden md:flex space-x-10">
+                    <a href="#latest" class="text-[#E6DCD2] hover:text-white uppercase text-lg tracking-widest font-bold transition">Highlights</a>
+                    <a href="#essentials" class="text-[#E6DCD2] hover:text-white uppercase text-lg tracking-widest font-bold transition">Essentials</a>
+                    <a href="#story" class="text-[#E6DCD2] hover:text-white uppercase text-lg tracking-widest font-bold transition">Our Story</a>
+                </div>
+                <div class="flex items-center space-x-4 text-[#E6DCD2]">
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="relative h-[85vh] w-full overflow-hidden">
+        <img src="HudsonHolly.jpg" alt="Hudson and Holly" class="absolute inset-0 w-full h-full object-cover">
+        
+        <div class="absolute inset-0 bg-black/30"></div>
+        
+        <div class="absolute inset-0 flex flex-col justify-center items-center text-center px-4">
+            <h1 class="text-white text-5xl md:text-8xl uppercase mb-6 drop-shadow-xl heading-font">
+                Tales from Hudson's Trail
+            </h1>
+            <p class="text-white text-2xl md:text-3xl font-light mb-10 italic drop-shadow-md">
+                Exploring the wild, one paw print at a time.
+            </p>
+            <a href="#latest" class="bg-[#E6DCD2] text-[#4E3629] px-10 py-5 uppercase tracking-widest font-bold text-base hover:bg-white transition duration-300 shadow-2xl rounded-sm">
+                Read the Latest Adventure
+            </a>
+        </div>
+    </div>
+
+    <div id="latest" class="bg-[#C9B49E] py-20 scroll-mt-24">
+        <div class="max-w-[95%] mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-5xl uppercase text-[#4E3629] heading-font">Hudson's Highlights</h2>
+                <button onclick="openModal('modal-all-posts')" class="text-gray-900 italic hover:text-[#4E3629] mt-3 text-lg inline-block border-b border-transparent hover:border-[#4E3629] transition">
+                    View all posts
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div class="group cursor-pointer bg-[#E6DCD2] p-4 rounded-lg shadow-lg hover:shadow-2xl hover:-translate-y-1 transition duration-300" onclick="openModal('modal-1')">
+                    <div class="aspect-square overflow-hidden bg-gray-300 mb-5 rounded-md">
+                        <img src="Field.jpg" class="w-full h-full object-cover group-hover:opacity-90 transition duration-500 transform group-hover:scale-105">
+                    </div>
+                    <h3 class="text-xl font-bold text-[#4E3629] group-hover:underline font-serif leading-tight">Field Freedom: Off-Leash Basics</h3>
+                    <p class="text-base text-gray-600 mt-2">Training • 5 min read</p>
+                </div>
+
+                <div class="group cursor-pointer bg-[#E6DCD2] p-4 rounded-lg shadow-lg hover:shadow-2xl hover:-translate-y-1 transition duration-300" onclick="openModal('modal-2')">
+                    <div class="aspect-square overflow-hidden bg-gray-300 mb-5 rounded-md">
+                        <img src="Work.jpg" class="w-full h-full object-cover object-[50%_25%] group-hover:opacity-90 transition duration-500 transform group-hover:scale-105">
+                    </div>
+                    <h3 class="text-xl font-bold text-[#4E3629] group-hover:underline font-serif leading-tight">Chief Morale Officer: Office Life</h3>
+                    <p class="text-base text-gray-600 mt-2">Lifestyle • 8 min read</p>
+                </div>
+
+                <div class="group cursor-pointer bg-[#E6DCD2] p-4 rounded-lg shadow-lg hover:shadow-2xl hover:-translate-y-1 transition duration-300" onclick="openModal('modal-3')">
+                    <div class="aspect-square overflow-hidden bg-gray-300 mb-5 rounded-md">
+                        <img src="Hike.jpg" class="w-full h-full object-cover object-top group-hover:opacity-90 transition duration-500 transform group-hover:scale-105">
+                    </div>
+                    <h3 class="text-xl font-bold text-[#4E3629] group-hover:underline font-serif leading-tight">Summit Seekers: The Hiking Guide</h3>
+                    <p class="text-base text-gray-600 mt-2">Adventure • 12 min read</p>
+                </div>
+
+                <div class="group cursor-pointer bg-[#E6DCD2] p-4 rounded-lg shadow-lg hover:shadow-2xl hover:-translate-y-1 transition duration-300" onclick="openModal('modal-4')">
+                    <div class="aspect-square overflow-hidden bg-gray-300 mb-5 rounded-md">
+                        <img src="Brewery.jpg" class="w-full h-full object-cover group-hover:opacity-90 transition duration-500 transform group-hover:scale-105">
+                    </div>
+                    <h3 class="text-xl font-bold text-[#4E3629] group-hover:underline font-serif leading-tight">Bark & Brews: Patio Etiquette</h3>
+                    <p class="text-base text-gray-600 mt-2">Lifestyle • 6 min read</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="essentials" class="bg-[#C9B49E] py-16 scroll-mt-24 border-t border-[#4E3629]/10">
+        <div class="max-w-[95%] mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-5xl uppercase text-[#4E3629] heading-font">Hudson's Essentials</h2>
+                <p class="text-gray-900 mt-3 italic text-lg">Doctor recommended support for your adventure companions.</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <a href="https://www.amazon.com/Dr-Bills-Feline-Support-Supplement/dp/B075HCGDXL" target="_blank" class="group relative h-[500px] overflow-hidden cursor-pointer block shadow-xl border-4 border-[#E6DCD2] rounded-lg">
+                    <img src="ProductOne.jpg" alt="Feline Support" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                    <div class="absolute inset-0 bg-gradient-to-t from-[#4E3629]/90 to-transparent opacity-90 group-hover:opacity-100 transition duration-300"></div>
+                    <div class="absolute bottom-0 left-0 right-0 text-center p-8">
+                        <p class="text-[#E6DCD2] italic font-serif mb-2 text-lg">Dr. Bill's</p>
+                        <h3 class="text-white text-3xl uppercase font-bold mb-4 heading-font">Feline Immune Support</h3>
+                        <button class="mt-2 px-8 py-3 bg-[#E6DCD2] text-[#4E3629] uppercase text-sm font-bold tracking-widest hover:bg-white transition shadow-lg rounded-sm">Buy on Amazon</button>
+                    </div>
+                </a>
+                <a href="https://www.amazon.com/Dr-Bills-Canine-Cognitive-Support/dp/B075HBJ16P" target="_blank" class="group relative h-[500px] overflow-hidden cursor-pointer block shadow-xl border-4 border-[#E6DCD2] rounded-lg">
+                    <img src="ProductTwo.jpg" alt="Canine Cognitive" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                    <div class="absolute inset-0 bg-gradient-to-t from-[#4E3629]/90 to-transparent opacity-90 group-hover:opacity-100 transition duration-300"></div>
+                    <div class="absolute bottom-0 left-0 right-0 text-center p-8">
+                        <p class="text-[#E6DCD2] italic font-serif mb-2 text-lg">Dr. Bill's</p>
+                        <h3 class="text-white text-3xl uppercase font-bold mb-4 heading-font">Canine Cognitive Support</h3>
+                        <button class="mt-2 px-8 py-3 bg-[#E6DCD2] text-[#4E3629] uppercase text-sm font-bold tracking-widest hover:bg-white transition shadow-lg rounded-sm">Buy on Amazon</button>
+                    </div>
+                </a>
+                <a href="https://www.amazon.com/Dr-Bills-Canine-Support-Supplement/dp/B075H9ZYH2" target="_blank" class="group relative h-[500px] overflow-hidden cursor-pointer block shadow-xl border-4 border-[#E6DCD2] rounded-lg">
+                    <img src="ProductThree.jpg" alt="Canine Immune" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                    <div class="absolute inset-0 bg-gradient-to-t from-[#4E3629]/90 to-transparent opacity-90 group-hover:opacity-100 transition duration-300"></div>
+                    <div class="absolute bottom-0 left-0 right-0 text-center p-8">
+                        <p class="text-[#E6DCD2] italic font-serif mb-2 text-lg">Dr. Bill's</p>
+                        <h3 class="text-white text-3xl uppercase font-bold mb-4 heading-font">Canine Immune Support</h3>
+                        <button class="mt-2 px-8 py-3 bg-[#E6DCD2] text-[#4E3629] uppercase text-sm font-bold tracking-widest hover:bg-white transition shadow-lg rounded-sm">Buy on Amazon</button>
+                    </div>
+                </a>
+            </div>
+
+            <div class="text-center mt-16">
+                <button onclick="openModal('modal-all-products')" class="bg-[#4E3629] text-[#E6DCD2] px-8 py-4 uppercase tracking-widest text-sm font-bold hover:bg-[#36251b] transition shadow-lg rounded-sm">
+                    View All Essentials
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="story" class="max-w-5xl mx-auto px-4 py-24 text-center scroll-mt-24">
+        <div class="aspect-video w-full overflow-hidden mb-10 shadow-2xl border-8 border-[#E6DCD2] rounded-lg transform rotate-1 hover:rotate-0 transition duration-500">
+            <img src="HudsonStory.jpg" alt="Hudson's Story" class="w-full h-full object-cover object-[50%_25%]">
+        </div>
+        <h2 class="text-5xl uppercase text-[#4E3629] mb-6 heading-font">Hudson's Story</h2>
+        <div class="prose prose-lg mx-auto text-gray-900 mb-10">
+            <p>
+                It started with a simple idea: dogs aren't just pets; they are the best adventure partners we could ask for. 
+                Whether it's a sunrise hike in the Rockies or a quiet evening by the campfire, our goal is to document the 
+                journey and help you make the most of your time with your four-legged best friend.
+            </p>
+        </div>
+        <button onclick="openModal('modal-family')" class="bg-[#4E3629] text-[#E6DCD2] px-10 py-4 uppercase tracking-widest text-sm font-bold hover:bg-[#36251b] transition shadow-xl rounded-sm">
+            Meet Hudson's Family
+        </button>
+    </div>
+
+    <div class="bg-[#4E3629] text-[#E6DCD2] py-20">
+        <div class="max-w-3xl mx-auto px-4 text-center">
+            <h2 class="text-4xl uppercase mb-6 text-white heading-font">Follow Hudson</h2>
+            <p class="text-[#E6DCD2] mb-10 text-lg">Get the latest trail guides, gear discounts, and dog training tips delivered straight to your inbox.</p>
+            <form class="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto">
+                <input type="email" placeholder="Enter your email" class="flex-1 px-6 py-4 text-gray-900 focus:outline-none bg-[#E6DCD2] rounded-sm">
+                <button class="bg-[#C9B49E] text-[#4E3629] px-8 py-4 uppercase font-bold text-sm hover:bg-white transition rounded-sm shadow-md">Subscribe</button>
+            </form>
+        </div>
+    </div>
+
+    <footer class="bg-[#C9B49E] border-t border-[#4E3629]/20 py-16">
+        <div class="max-w-[95%] mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12">
+            <div class="text-center md:text-left">
+                <h4 class="heading-font text-2xl uppercase mb-6 text-[#4E3629]">How's Hudson</h4>
+                <p class="text-base text-gray-900">© 2025 Adventure Dog Blog.</p>
+            </div>
+            <div class="text-center md:text-left">
+                <h4 class="font-bold text-sm uppercase tracking-widest text-[#4E3629] mb-6">Read</h4>
+                <ul class="space-y-3 text-base text-gray-900">
+                    <li><a href="#latest" class="hover:text-[#4E3629] hover:underline">Highlights</a></li>
+                    <li><a href="#essentials" class="hover:text-[#4E3629] hover:underline">Essentials</a></li>
+                    <li><a href="#story" class="hover:text-[#4E3629] hover:underline">Our Story</a></li>
+                </ul>
+            </div>
+            <div class="text-center md:text-left">
+                <h4 class="font-bold text-sm uppercase tracking-widest text-[#4E3629] mb-6">Connect</h4>
+                <ul class="space-y-3 text-base text-gray-900">
+                    <li><a href="https://www.instagram.com/hudsoninthepnw/" target="_blank" class="hover:text-[#4E3629] hover:underline">Instagram</a></li>
+                    <li><button onclick="alert('This page is currently under construction.')" class="hover:text-[#4E3629] hover:underline">Facebook</button></li>
+                    <li><button onclick="alert('This page is currently under construction.')" class="hover:text-[#4E3629] hover:underline">TikTok</button></li>
+                </ul>
+            </div>
+            <div class="text-center md:text-left">
+                <h4 class="font-bold text-sm uppercase tracking-widest text-[#4E3629] mb-6">Legal</h4>
+                <ul class="space-y-3 text-base text-gray-900">
+                    <li><button onclick="openModal('modal-privacy')" class="hover:text-[#4E3629] text-left hover:underline">Privacy Policy</button></li>
+                    <li><button onclick="openModal('modal-terms')" class="hover:text-[#4E3629] text-left hover:underline">Terms of Service</button></li>
+                </ul>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Loading Screen Logic
+        window.addEventListener('load', function() {
+            const loader = document.getElementById('page-loader');
+            loader.classList.add('opacity-0'); // Start fade out
+            setTimeout(() => {
+                loader.style.display = 'none'; // Remove from DOM after fade
+            }, 700); // Matches transition duration
+        });
+
+        // Modal Logic
+        function openModal(modalID) {
+            document.getElementById(modalID).classList.remove('hidden');
+            document.body.style.overflow = 'hidden'; 
+        }
+
+        function closeModal(modalID) {
+            document.getElementById(modalID).classList.add('hidden');
+            document.body.style.overflow = 'auto'; 
+        }
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === "Escape") {
+                const modals = document.querySelectorAll('[role="dialog"]');
+                modals.forEach(modal => {
+                    if (!modal.classList.contains('hidden')) {
+                        modal.classList.add('hidden');
+                        document.body.style.overflow = 'auto';
+                    }
+                });
+            }
+        });
+    </script>
+
+    <div id="modal-all-posts" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 bg-[#4E3629] bg-opacity-90 transition-opacity backdrop-blur-sm" onclick="closeModal('modal-all-posts')"></div>
+        <div class="fixed inset-0 z-10 overflow-y-auto modal-scroll">
+            <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+                <div class="relative transform overflow-hidden rounded-lg bg-[#E6DCD2] text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-5xl border-2 border-[#4E3629]">
+                    <button type="button" class="absolute top-4 right-4 z-10 text-gray-600 hover:text-[#4E3629]" onclick="closeModal('modal-all-posts')">
+                        <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                    <div class="bg-[#E6DCD2] px-8 py-10 sm:px-12">
+                        <h2 class="text-4xl text-[#4E3629] mb-10 heading-font uppercase text-center border-b-2 border-[#4E3629]/10 pb-4">All Adventure Logs</h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div class="flex gap-6 cursor-pointer hover:bg-[#C9B49E]/40 p-4 rounded-lg transition duration-200" onclick="openModal('modal-1'); closeModal('modal-all-posts')">
+                                <img src="Field.jpg" class="w-32 h-32 object-cover rounded-md shadow-sm">
+                                <div class="flex flex-col justify-center">
+                                    <h4 class="font-bold text-[#4E3629] uppercase text-lg heading-font">Field Freedom</h4>
+                                    <p class="text-sm text-gray-700 mt-1 font-serif">Training • 5 min</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-6 cursor-pointer hover:bg-[#C9B49E]/40 p-4 rounded-lg transition duration-200" onclick="openModal('modal-2'); closeModal('modal-all-posts')">
+                                <img src="Work.jpg" class="w-32 h-32 object-cover rounded-md shadow-sm">
+                                <div class="flex flex-col justify-center">
+                                    <h4 class="font-bold text-[#4E3629] uppercase text-lg heading-font">Office Life</h4>
+                                    <p class="text-sm text-gray-700 mt-1 font-serif">Lifestyle • 8 min</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-6 cursor-pointer hover:bg-[#C9B49E]/40 p-4 rounded-lg transition duration-200" onclick="openModal('modal-3'); closeModal('modal-all-posts')">
+                                <img src="Hike.jpg" class="w-32 h-32 object-cover rounded-md shadow-sm">
+                                <div class="flex flex-col justify-center">
+                                    <h4 class="font-bold text-[#4E3629] uppercase text-lg heading-font">Hiking Guide</h4>
+                                    <p class="text-sm text-gray-700 mt-1 font-serif">Adventure • 12 min</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-6 cursor-pointer hover:bg-[#C9B49E]/40 p-4 rounded-lg transition duration-200" onclick="openModal('modal-4'); closeModal('modal-all-posts')">
+                                <img src="Brewery.jpg" class="w-32 h-32 object-cover rounded-md shadow-sm">
+                                <div class="flex flex-col justify-center">
+                                    <h4 class="font-bold text-[#4E3629] uppercase text-lg heading-font">Bark & Brews</h4>
+                                    <p class="text-sm text-gray-700 mt-1 font-serif">Lifestyle • 6 min</p>
+                                </div>
+                            </div>
+
+                            <div class="flex gap-6 cursor-pointer hover:bg-[#C9B49E]/40 p-4 rounded-lg transition duration-200" onclick="alert('This is a demo of an extra post template!')">
+                                <img src="Work.jpg" class="w-32 h-32 object-cover rounded-md grayscale shadow-sm"> 
+                                <div class="flex flex-col justify-center">
+                                    <h4 class="font-bold text-[#4E3629] uppercase text-lg heading-font">The Art of the Nap</h4>
+                                    <p class="text-sm text-gray-700 mt-1 font-serif">Lifestyle • 3 min</p>
+                                    <p class="text-xs text-gray-500 mt-2 line-clamp-2">How to sleep anywhere, anytime, regardless of the terrain.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-12 text-center">
+                            <button type="button" class="inline-flex justify-center rounded-sm bg-[#4E3629] px-10 py-3 text-sm font-bold uppercase tracking-widest text-[#E6DCD2] shadow-lg hover:bg-[#36251b] transition" onclick="closeModal('modal-all-posts')">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-all-products" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 bg-[#4E3629] bg-opacity-90 transition-opacity backdrop-blur-sm" onclick="closeModal('modal-all-products')"></div>
+        <div class="fixed inset-0 z-10 overflow-y-auto modal-scroll">
+            <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+                <div class="relative transform overflow-hidden rounded-lg bg-[#E6DCD2] text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-5xl border-2 border-[#4E3629]">
+                    <button type="button" class="absolute top-4 right-4 z-10 text-gray-600 hover:text-[#4E3629]" onclick="closeModal('modal-all-products')">
+                        <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                    <div class="bg-[#E6DCD2] px-8 py-10 sm:px-12">
+                        <h2 class="text-4xl text-[#4E3629] mb-10 heading-font uppercase text-center border-b-2 border-[#4E3629]/10 pb-4">All Essentials</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <a href="https://www.amazon.com/Dr-Bills-Feline-Support-Supplement/dp/B075HCGDXL" target="_blank" class="flex gap-6 cursor-pointer hover:bg-[#C9B49E]/40 p-4 rounded-lg transition duration-200">
+                                <img src="ProductOne.jpg" class="w-32 h-32 object-cover rounded-md shadow-sm">
+                                <div class="flex flex-col justify-center">
+                                    <h4 class="font-bold text-[#4E3629] uppercase text-lg heading-font">Feline Immune Support</h4>
+                                    <p class="text-sm text-gray-700 font-serif">Dr. Bill's</p>
+                                    <p class="text-sm text-[#4E3629] mt-2 font-bold uppercase tracking-wide">View on Amazon &rarr;</p>
+                                </div>
+                            </a>
+                            <a href="https://www.amazon.com/Dr-Bills-Canine-Cognitive-Support/dp/B075HBJ16P" target="_blank" class="flex gap-6 cursor-pointer hover:bg-[#C9B49E]/40 p-4 rounded-lg transition duration-200">
+                                <img src="ProductTwo.jpg" class="w-32 h-32 object-cover rounded-md shadow-sm">
+                                <div class="flex flex-col justify-center">
+                                    <h4 class="font-bold text-[#4E3629] uppercase text-lg heading-font">Canine Cognitive Support</h4>
+                                    <p class="text-sm text-gray-700 font-serif">Dr. Bill's</p>
+                                    <p class="text-sm text-[#4E3629] mt-2 font-bold uppercase tracking-wide">View on Amazon &rarr;</p>
+                                </div>
+                            </a>
+                            <a href="https://www.amazon.com/Dr-Bills-Canine-Support-Supplement/dp/B075H9ZYH2" target="_blank" class="flex gap-6 cursor-pointer hover:bg-[#C9B49E]/40 p-4 rounded-lg transition duration-200">
+                                <img src="ProductThree.jpg" class="w-32 h-32 object-cover rounded-md shadow-sm">
+                                <div class="flex flex-col justify-center">
+                                    <h4 class="font-bold text-[#4E3629] uppercase text-lg heading-font">Canine Immune Support</h4>
+                                    <p class="text-sm text-gray-700 font-serif">Dr. Bill's</p>
+                                    <p class="text-sm text-[#4E3629] mt-2 font-bold uppercase tracking-wide">View on Amazon &rarr;</p>
+                                </div>
+                            </a>
+                            
+                            <a href="#" class="flex gap-6 cursor-pointer hover:bg-[#C9B49E]/40 p-4 rounded-lg transition duration-200">
+                                <img src="ProductOne.jpg" class="w-32 h-32 object-cover rounded-md opacity-80 grayscale shadow-sm">
+                                <div class="flex flex-col justify-center">
+                                    <h4 class="font-bold text-[#4E3629] uppercase text-lg heading-font">Canine Joint Support</h4>
+                                    <p class="text-sm text-gray-700 font-serif">Dr. Bill's</p>
+                                    <p class="text-sm text-gray-500 mt-2 italic">Coming Soon</p>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="mt-12 text-center">
+                            <button type="button" class="inline-flex justify-center rounded-sm bg-[#4E3629] px-10 py-3 text-sm font-bold uppercase tracking-widest text-[#E6DCD2] shadow-lg hover:bg-[#36251b] transition" onclick="closeModal('modal-all-products')">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-family" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 bg-[#4E3629] bg-opacity-90 transition-opacity backdrop-blur-sm" onclick="closeModal('modal-family')"></div>
+        <div class="fixed inset-0 z-10 overflow-y-auto modal-scroll">
+            <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+                <div class="relative transform overflow-hidden rounded-lg bg-[#E6DCD2] text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg border-2 border-[#4E3629]">
+                    <button type="button" class="absolute top-4 right-4 z-10 text-gray-600 hover:text-[#4E3629]" onclick="closeModal('modal-family')">
+                        <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                    <div class="bg-[#E6DCD2] px-8 py-10 sm:px-12 text-center">
+                        <h2 class="text-4xl text-[#4E3629] mb-6 heading-font uppercase">The Humans Behind the Hound</h2>
+                        <div class="prose prose-stone text-gray-800">
+                            <p class="mb-6 font-serif italic text-xl leading-relaxed">"We aren't just owners; we are Hudson's support staff, photographers, and treat dispensers."</p>
+                            <hr class="border-[#4E3629]/20 my-6 w-2/3 mx-auto">
+                            <div class="text-left space-y-6">
+                                <div><h3 class="font-bold text-[#4E3629] uppercase text-lg heading-font">Sarah (The Navigator)</h3><p class="text-base text-gray-700">Planner of routes, carrier of water, and the one who remembers the poop bags.</p></div>
+                                <div><h3 class="font-bold text-[#4E3629] uppercase text-lg heading-font">Mike (The Sherpa)</h3><p class="text-base text-gray-700">Carries the heavy gear, sets up the tent, and is Hudson's favorite pillow.</p></div>
+                                <div><h3 class="font-bold text-[#4E3629] uppercase text-lg heading-font">Hudson (The Boss)</h3><p class="text-base text-gray-700">Leads the way, sniffs every tree, and ensures morale remains high.</p></div>
+                            </div>
+                        </div>
+                        <button type="button" class="mt-10 inline-flex w-full justify-center rounded-sm bg-[#4E3629] px-10 py-3 text-sm font-bold uppercase tracking-widest text-[#E6DCD2] shadow-lg hover:bg-[#36251b] transition" onclick="closeModal('modal-family')">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-1" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 bg-[#4E3629] bg-opacity-90 transition-opacity backdrop-blur-sm" onclick="closeModal('modal-1')"></div>
+        <div class="fixed inset-0 z-10 overflow-y-auto modal-scroll">
+            <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+                <div class="relative transform overflow-hidden rounded-lg bg-[#E6DCD2] text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-3xl border-2 border-[#4E3629]">
+                    <button type="button" class="absolute top-4 right-4 z-10 text-gray-600 hover:text-[#4E3629]" onclick="closeModal('modal-1')">
+                        <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                    <div class="bg-[#E6DCD2]">
+                        <img src="Field.jpg" alt="Recall Training" class="w-full h-80 object-cover">
+                        <div class="px-8 py-10 sm:px-12">
+                            <div class="flex items-center space-x-2 text-sm uppercase tracking-widest text-gray-600 mb-6 font-bold">
+                                <span>Training</span><span>&bull;</span><span>January 10, 2025</span>
+                            </div>
+                            <h2 class="text-4xl sm:text-5xl text-[#4E3629] mb-8 heading-font uppercase leading-tight">Field Freedom: Off-Leash Basics</h2>
+                            <div class="prose prose-lg prose-stone max-w-none text-gray-900">
+                                <p class="text-xl leading-relaxed mb-8 italic border-l-4 border-[#4E3629] pl-6 bg-[#C9B49E]/20 py-4">"A reliable recall isn't just a cool trick; it's a safety feature. It's the invisible leash that keeps your dog safe in the wilderness."</p>
+                                <p class="mb-6">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+                                <h3 class="text-2xl font-bold text-[#4E3629] mt-10 mb-6 heading-font">Why Recall Fails</h3>
+                                <p class="mb-6">Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+                                <ul class="list-disc pl-6 space-y-3 mb-8"><li><strong>Distraction Levels:</strong> Lorem ipsum dolor sit amet.</li><li><strong>High Value Rewards:</strong> Consectetur adipiscing elit.</li><li><strong>Consistency:</strong> Sed do eiusmod tempor incididunt.</li></ul>
+                                <h3 class="text-2xl font-bold text-[#4E3629] mt-10 mb-6 heading-font">The 3-Step Process</h3>
+                                <p class="mb-6">Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit.</p>
+                            </div>
+                        </div>
+                        <div class="bg-[#E6DCD2] px-8 py-6 sm:flex sm:flex-row-reverse sm:px-12 border-t border-[#4E3629]/20">
+                            <button type="button" class="mt-3 inline-flex w-full justify-center rounded-sm bg-[#4E3629] px-8 py-3 text-sm font-bold uppercase tracking-widest text-[#E6DCD2] shadow-lg hover:bg-[#36251b] sm:mt-0 sm:w-auto transition" onclick="closeModal('modal-1')">Back to Articles</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-2" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 bg-[#4E3629] bg-opacity-90 transition-opacity backdrop-blur-sm" onclick="closeModal('modal-2')"></div>
+        <div class="fixed inset-0 z-10 overflow-y-auto modal-scroll">
+            <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+                <div class="relative transform overflow-hidden rounded-lg bg-[#E6DCD2] text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-3xl border-2 border-[#4E3629]">
+                    <button type="button" class="absolute top-4 right-4 z-10 text-gray-600 hover:text-[#4E3629]" onclick="closeModal('modal-2')">
+                        <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                    <div class="bg-[#E6DCD2]">
+                        <img src="Work.jpg" alt="Dog Collar" class="w-full h-80 object-cover object-[50%_25%]">
+                        <div class="px-8 py-10 sm:px-12">
+                            <div class="flex items-center space-x-2 text-sm uppercase tracking-widest text-gray-600 mb-6 font-bold">
+                                <span>Gear Review</span><span>&bull;</span><span>February 2, 2025</span>
+                            </div>
+                            <h2 class="text-4xl sm:text-5xl text-[#4E3629] mb-8 heading-font uppercase leading-tight">Chief Morale Officer: Office Life</h2>
+                            <div class="prose prose-lg prose-stone max-w-none text-gray-900">
+                                <p class="mb-6">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+                                <h3 class="text-2xl font-bold text-[#4E3629] mt-10 mb-6 heading-font">Materials Matter</h3>
+                                <p class="mb-6">Duis sagittis ipsum. Praesent mauris. Fusce nec tellus sed augue semper porta.</p>
+                                <h3 class="text-2xl font-bold text-[#4E3629] mt-10 mb-6 heading-font">Our Top Picks</h3>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+                                    <div class="bg-[#C9B49E]/40 p-6 rounded border border-[#4E3629]/20"><h4 class="font-bold text-[#4E3629] uppercase">The Trail Master</h4><p class="text-base mt-2">Best for rugged hiking.</p></div>
+                                    <div class="bg-[#C9B49E]/40 p-6 rounded border border-[#4E3629]/20"><h4 class="font-bold text-[#4E3629] uppercase">The Urban Walker</h4><p class="text-base mt-2">Stylish yet functional.</p></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-[#E6DCD2] px-8 py-6 sm:flex sm:flex-row-reverse sm:px-12 border-t border-[#4E3629]/20">
+                            <button type="button" class="mt-3 inline-flex w-full justify-center rounded-sm bg-[#4E3629] px-8 py-3 text-sm font-bold uppercase tracking-widest text-[#E6DCD2] shadow-lg hover:bg-[#36251b] sm:mt-0 sm:w-auto transition" onclick="closeModal('modal-2')">Back to Articles</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-3" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 bg-[#4E3629] bg-opacity-90 transition-opacity backdrop-blur-sm" onclick="closeModal('modal-3')"></div>
+        <div class="fixed inset-0 z-10 overflow-y-auto modal-scroll">
+            <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+                <div class="relative transform overflow-hidden rounded-lg bg-[#E6DCD2] text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-3xl border-2 border-[#4E3629]">
+                    <button type="button" class="absolute top-4 right-4 z-10 text-gray-600 hover:text-[#4E3629]" onclick="closeModal('modal-3')">
+                        <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                    <div class="bg-[#E6DCD2]">
+                        <img src="Hike.jpg" alt="Camping with dog" class="w-full h-80 object-cover object-top">
+                        <div class="px-8 py-10 sm:px-12">
+                            <div class="flex items-center space-x-2 text-sm uppercase tracking-widest text-gray-600 mb-6 font-bold">
+                                <span>Guides</span><span>&bull;</span><span>March 15, 2025</span>
+                            </div>
+                            <h2 class="text-4xl sm:text-5xl text-[#4E3629] mb-8 heading-font uppercase leading-tight">Summit Seekers: The Hiking Guide</h2>
+                            <div class="prose prose-lg prose-stone max-w-none text-gray-900">
+                                <p class="mb-6">Maecenas viverra. Proin velit sed augue viverra.</p>
+                                <h3 class="text-2xl font-bold text-[#4E3629] mt-10 mb-6 heading-font">The Essentials</h3>
+                                <ul class="list-none space-y-4 mb-8">
+                                    <li class="flex items-center"><span class="mr-3 text-[#4E3629] text-xl">✓</span> First Aid Kit (Dog Specific)</li>
+                                    <li class="flex items-center"><span class="mr-3 text-[#4E3629] text-xl">✓</span> Collapsible Bowls</li>
+                                </ul>
+                                <div class="bg-[#C9B49E]/40 border-l-4 border-[#4E3629] p-6 my-8"><p class="font-bold text-[#4E3629] uppercase mb-2">Pro Tip:</p><p class="text-base text-gray-800">Always check trail regulations before heading out.</p></div>
+                            </div>
+                        </div>
+                        <div class="bg-[#E6DCD2] px-8 py-6 sm:flex sm:flex-row-reverse sm:px-12 border-t border-[#4E3629]/20">
+                            <button type="button" class="mt-3 inline-flex w-full justify-center rounded-sm bg-[#4E3629] px-8 py-3 text-sm font-bold uppercase tracking-widest text-[#E6DCD2] shadow-lg hover:bg-[#36251b] sm:mt-0 sm:w-auto transition" onclick="closeModal('modal-3')">Back to Articles</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-4" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 bg-[#4E3629] bg-opacity-90 transition-opacity backdrop-blur-sm" onclick="closeModal('modal-4')"></div>
+        <div class="fixed inset-0 z-10 overflow-y-auto modal-scroll">
+            <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+                <div class="relative transform overflow-hidden rounded-lg bg-[#E6DCD2] text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-3xl border-2 border-[#4E3629]">
+                    <button type="button" class="absolute top-4 right-4 z-10 text-gray-600 hover:text-[#4E3629]" onclick="closeModal('modal-4')">
+                        <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                    <div class="bg-[#E6DCD2]">
+                        <img src="Brewery.jpg" alt="Winter hike" class="w-full h-80 object-cover">
+                        <div class="px-8 py-10 sm:px-12">
+                            <div class="flex items-center space-x-2 text-sm uppercase tracking-widest text-gray-600 mb-6 font-bold">
+                                <span>Guides</span><span>&bull;</span><span>December 10, 2025</span>
+                            </div>
+                            <h2 class="text-4xl sm:text-5xl text-[#4E3629] mb-8 heading-font uppercase leading-tight">Bark & Brews: Patio Etiquette</h2>
+                            <div class="prose prose-lg prose-stone max-w-none text-gray-900">
+                                <p class="mb-6">Pellentesque habitant morbi tristique senectus.</p>
+                                <h3 class="text-2xl font-bold text-[#4E3629] mt-10 mb-6 heading-font">Paw Protection</h3>
+                                <p class="mb-6">Donec eu libero sit amet quam egestas semper.</p>
+                                <blockquote class="border-l-4 border-[#4E3629] pl-6 italic my-8 text-gray-600 text-xl">"Musher's Secret wax is a game changer for ice balls forming between toes."</blockquote>
+                            </div>
+                        </div>
+                        <div class="bg-[#E6DCD2] px-8 py-6 sm:flex sm:flex-row-reverse sm:px-12 border-t border-[#4E3629]/20">
+                            <button type="button" class="mt-3 inline-flex w-full justify-center rounded-sm bg-[#4E3629] px-8 py-3 text-sm font-bold uppercase tracking-widest text-[#E6DCD2] shadow-lg hover:bg-[#36251b] sm:mt-0 sm:w-auto transition" onclick="closeModal('modal-4')">Back to Articles</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-privacy" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 bg-[#4E3629] bg-opacity-90 transition-opacity backdrop-blur-sm" onclick="closeModal('modal-privacy')"></div>
+        <div class="fixed inset-0 z-10 overflow-y-auto modal-scroll">
+            <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+                <div class="relative transform overflow-hidden rounded-lg bg-[#E6DCD2] text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-2xl border-2 border-[#4E3629]">
+                    <button type="button" class="absolute top-4 right-4 z-10 text-gray-600 hover:text-[#4E3629]" onclick="closeModal('modal-privacy')">
+                        <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                    <div class="px-8 py-10 sm:px-12">
+                        <h2 class="text-4xl text-[#4E3629] mb-8 heading-font uppercase">Privacy Policy</h2>
+                        <div class="prose prose-stone text-gray-800 text-sm">
+                            <p>Last updated: January 2025</p>
+                            <p><strong>1. Information We Collect</strong><br>We collect basic information such as your email if you subscribe to our newsletter.</p>
+                            <p><strong>2. How We Use Information</strong><br>To send you updates about Hudson's adventures. We do not sell your data.</p>
+                            <p><strong>3. Cookies</strong><br>We use minimal cookies to ensure site functionality.</p>
+                        </div>
+                        <button type="button" class="mt-8 w-full rounded-sm bg-[#4E3629] px-8 py-3 text-sm font-bold uppercase tracking-widest text-[#E6DCD2] shadow-lg hover:bg-[#36251b]" onclick="closeModal('modal-privacy')">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-terms" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 bg-[#4E3629] bg-opacity-90 transition-opacity backdrop-blur-sm" onclick="closeModal('modal-terms')"></div>
+        <div class="fixed inset-0 z-10 overflow-y-auto modal-scroll">
+            <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+                <div class="relative transform overflow-hidden rounded-lg bg-[#E6DCD2] text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-2xl border-2 border-[#4E3629]">
+                    <button type="button" class="absolute top-4 right-4 z-10 text-gray-600 hover:text-[#4E3629]" onclick="closeModal('modal-terms')">
+                        <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                    <div class="px-8 py-10 sm:px-12">
+                        <h2 class="text-4xl text-[#4E3629] mb-8 heading-font uppercase">Terms of Service</h2>
+                        <div class="prose prose-stone text-gray-800 text-sm">
+                            <p><strong>1. Content</strong><br>All images and text are property of How's Hudson unless otherwise stated.</p>
+                            <p><strong>2. Conduct</strong><br>Be kind in your interactions with our community.</p>
+                            <p><strong>3. Liability</strong><br>We are not responsible for any adventures you take based on our recommendations. Hike safely!</p>
+                        </div>
+                        <button type="button" class="mt-8 w-full rounded-sm bg-[#4E3629] px-8 py-3 text-sm font-bold uppercase tracking-widest text-[#E6DCD2] shadow-lg hover:bg-[#36251b]" onclick="closeModal('modal-terms')">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
