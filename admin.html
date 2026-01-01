@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hudson Admin Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="content.js"></script>
+    <style>
+        body { margin: 0; padding: 0; overflow: hidden; background: #f3f4f6; font-family: sans-serif; }
+        #main-container { display: flex; height: calc(100vh - 80px); width: 100vw; overflow: hidden; }
+        .panel-left { display: flex; width: 50%; min-width: 350px; padding: 15px; gap: 15px; flex-direction: row; }
+        .panel-right { flex: 1; min-width: 300px; background: white; position: relative; border-left: 1px solid #ccc; }
+        .resizer { width: 8px; cursor: col-resize; background-color: #d1d5db; border-left: 1px solid #9ca3af; border-right: 1px solid #9ca3af; display: flex; align-items: center; justify-content: center; z-index: 50; }
+        .resizer:hover, .resizer.active { background-color: #4E3629; }
+        .iframe-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 20; }
+        
+        .toolbar { display: flex; flex-wrap: wrap; gap: 5px; background: #e5e7eb; padding: 8px; border-radius: 6px 6px 0 0; border: 1px solid #ccc; border-bottom: none; }
+        .tool-btn { background: white; border: 1px solid #ccc; cursor: pointer; padding: 4px 8px; border-radius: 4px; font-size: 14px; min-width: 32px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; color: #374151; }
+        .tool-btn:hover { background: #4E3629; color: white; border-color: #4E3629; }
+        .editor-box { min-height: 300px; border: 1px solid #ccc; padding: 20px; background: white; border-radius: 0 0 6px 6px; overflow-y: auto; max-height: 50vh; font-family: 'Georgia', serif; line-height: 1.6; }
+        .editor-box:focus { outline: 2px solid #4E3629; outline-offset: -2px; }
+
+        .draggable-item { transition: all 0.2s; border: 1px solid transparent; background: white; }
+        .draggable-item:hover { background-color: #f3f4f6; border-color: #d1d5db; }
+        .dragging { opacity: 0.5; background: #e5e7eb; border: 2px dashed #4E3629; }
+        .drag-over { border-top: 2px solid #4E3629; }
+        
+        input[type="file"] { display: none; }
+        .custom-file-upload { display: inline-block; padding: 6px 12px; cursor: pointer; background: #4E3629; color: white; border-radius: 4px; font-size: 0.8em; }
+        select.tool-select { height: 30px; border: 1px solid #ccc; border-radius: 4px; padding: 0 5px; cursor: pointer; }
+    </style>
+</head>
+<body class="bg-gray-200">
+
+    <div class="h-20 bg-white flex justify-between items-center px-6 shadow-md z-30 relative">
+        <h1 class="text-2xl font-bold text-[#4E3629]">How's Hudson Admin</h1>
+        <div class="flex gap-4">
+            <button onclick="togglePreview()" id="btn-toggle" class="px-4 py-2 rounded bg-[#4E3629] text-white text-sm font-bold shadow transition">Toggle Full Preview</button>
+            <button onclick="downloadNewData()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded shadow font-bold transition">💾 Save Changes</button>
+        </div>
+    </div>
+
+    <div id="main-container">
+        <div id="left-pane" class="panel-left">
+            <div class="w-1/3 bg-white p-4 rounded shadow flex flex-col h-full overflow-hidden">
+                <h2 class="font-bold text-lg mb-2 text-[#4E3629]">Content</h2>
+                <div class="overflow-y-auto flex-1 pr-1">
+                    <p class="text-xs text-gray-500 mb-2 uppercase font-bold tracking-wider">Site Settings</p>
+                    <div class="space-y-1 mb-4">
+                        <div onclick="loadStory()" class="p-2 rounded bg-gray-50 hover:bg-gray-200 cursor-pointer text-sm font-bold text-gray-700">📖 Edit Hudson's Story</div>
+                        <div onclick="loadFamily()" class="p-2 rounded bg-gray-50 hover:bg-gray-200 cursor-pointer text-sm font-bold text-gray-700">👥 Edit Family Section</div>
+                        <div onclick="loadFooter()" class="p-2 rounded bg-gray-50 hover:bg-gray-200 cursor-pointer text-sm font-bold text-gray-700">🔗 Edit Footer & Socials</div>
+                    </div>
+
+                    <p class="text-xs text-gray-500 mb-2 uppercase font-bold tracking-wider">Posts</p>
+                    <div id="post-list" class="space-y-1 mb-4"></div>
+                    <button onclick="createNewPost()" class="w-full bg-[#E6DCD2] text-[#4E3629] py-2 rounded text-sm font-bold hover:bg-[#d4c5b5] mb-4">+ New Post</button>
+
+                    <p class="text-xs text-gray-500 mb-2 uppercase font-bold tracking-wider">Products</p>
+                    <div id="product-list" class="space-y-1 mb-4"></div>
+                    <button onclick="createNewProduct()" class="w-full bg-[#E6DCD2] text-[#4E3629] py-2 rounded text-sm font-bold hover:bg-[#d4c5b5]">+ New Product</button>
+                </div>
+            </div>
+
+            <div class="w-2/3 bg-white p-4 rounded shadow h-full overflow-y-auto" id="editor-wrapper">
+                <div id="editor-panel">
+                    <div class="flex flex-col items-center justify-center h-full text-gray-400"><p>Select an item from the left to start editing.</p></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="resizer" id="dragMe"><div class="h-8 w-1 bg-gray-400 rounded"></div></div>
+
+        <div id="right-pane" class="panel-right">
+            <div id="iframe-blocker" class="iframe-overlay"></div>
+            <div class="absolute top-0 left-0 bg-[#4E3629] text-white text-xs px-2 py-1 z-10 opacity-90 shadow">Live Preview</div>
+            <iframe id="preview-frame" src="Index.html" class="w-full h-full border-none block"></iframe>
+        </div>
+    </div>
+
+    <script>
+        // INIT: Check if siteData exists (handles const vs var issue)
+        if (typeof siteData === 'undefined') {
+             var siteData = { posts: [], products: [] }; 
+             console.warn("siteData not found in window scope. Initializing empty.");
+        } else {
+             // Convert legacy footer object to array if needed
+             if (siteData.footer && !Array.isArray(siteData.footer)) {
+                 const newFooter = [];
+                 if(siteData.footer.instagram) newFooter.push({platform: "Instagram", url: siteData.footer.instagram});
+                 if(siteData.footer.facebook) newFooter.push({platform: "Facebook", url: siteData.footer.facebook});
+                 if(siteData.footer.tiktok) newFooter.push({platform: "TikTok", url: siteData.footer.tiktok});
+                 siteData.footer = newFooter;
+             }
+        }
+
+        // DEFAULTS: Ensure fields exist
+        if (!siteData.story) siteData.story = { title: "Hudson's Story", content: "<p>Write your story here...</p>", image: "HudsonStory.jpg" };
+        if (!siteData.family) siteData.family = { title: "The Humans Behind the Hound", description: "We aren't just owners; we are Hudson's support staff, photographers, and treat dispensers.", buttonText: "Meet Hudson's Family", image: "Family.jpg" };
+        if (!siteData.footer) siteData.footer = [];
+
+        let debounceTimer;
+        function triggerUpdate() { clearTimeout(debounceTimer); debounceTimer = setTimeout(() => { updatePreview(); }, 300); }
+
+        const resizer = document.getElementById('dragMe');
+        const leftPane = document.getElementById('left-pane');
+        const blocker = document.getElementById('iframe-blocker');
+        let isResizing = false;
+        resizer.addEventListener('mousedown', function(e) { isResizing = true; resizer.classList.add('active'); blocker.style.display = 'block'; document.body.style.cursor = 'col-resize'; document.addEventListener('mousemove', handleMouseMove); document.addEventListener('mouseup', handleMouseUp); });
+        function handleMouseMove(e) { if (!isResizing) return; const containerWidth = document.body.clientWidth; const newLeftWidth = (e.clientX / containerWidth) * 100; if (newLeftWidth > 15 && newLeftWidth < 85) leftPane.style.width = newLeftWidth + '%'; }
+        function handleMouseUp() { isResizing = false; resizer.classList.remove('active'); blocker.style.display = 'none'; document.body.style.cursor = 'default'; document.removeEventListener('mousemove', handleMouseMove); document.removeEventListener('mouseup', handleMouseUp); }
+
+        let isFullPreview = false;
+        function togglePreview() { isFullPreview = !isFullPreview; const btn = document.getElementById('btn-toggle'); if (isFullPreview) { leftPane.style.display = 'none'; resizer.style.display = 'none'; btn.innerText = "Exit Full Preview"; btn.classList.replace('bg-[#4E3629]', 'bg-gray-500'); } else { leftPane.style.display = 'flex'; resizer.style.display = 'flex'; btn.innerText = "Toggle Full Preview"; btn.classList.replace('bg-gray-500', 'bg-[#4E3629]'); } }
+
+        let currentEditingId = null;
+        let currentType = null; 
+
+        function updatePreview() { document.getElementById('preview-frame').contentWindow.postMessage(siteData, '*'); }
+
+        function handleImageUpload(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const base64String = e.target.result;
+                    if(currentType === 'post') siteData.posts[currentEditingId].image = base64String;
+                    if(currentType === 'product') siteData.products[currentEditingId].image = base64String;
+                    if(currentType === 'story') siteData.story.image = base64String;
+                    if(currentType === 'family') siteData.family.image = base64String;
+                    document.getElementById('img-preview').src = base64String;
+                    triggerUpdate();
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function renderSidebar() {
+            const postList = document.getElementById('post-list');
+            const prodList = document.getElementById('product-list');
+            postList.innerHTML = ''; prodList.innerHTML = '';
+            
+            if (siteData.posts && siteData.posts.length > 0) {
+                siteData.posts.forEach((post, index) => postList.appendChild(createDraggableItem(post.title, index, 'post')));
+            } else {
+                postList.innerHTML = '<div class="text-xs text-gray-400 italic">No posts found.</div>';
+            }
+
+            if (siteData.products && siteData.products.length > 0) {
+                siteData.products.forEach((prod, index) => prodList.appendChild(createDraggableItem(prod.title, index, 'product')));
+            } else {
+                prodList.innerHTML = '<div class="text-xs text-gray-400 italic">No products found.</div>';
+            }
+            
+            updatePreview();
+        }
+
+        function createDraggableItem(title, index, type) {
+            const div = document.createElement('div');
+            div.className = "draggable-item p-2 rounded flex justify-between items-center text-sm cursor-pointer border border-gray-200 shadow-sm mb-1";
+            div.draggable = true; div.dataset.index = index; div.dataset.type = type;
+            div.innerHTML = `<div class="flex items-center w-full overflow-hidden pointer-events-none"><span class="drag-handle text-gray-400 mr-2">⋮⋮</span><span class="truncate select-none ml-2 text-gray-700 font-medium">${title}</span></div><span class="delete-btn text-xs text-red-400 font-bold px-2 hover:text-red-600 z-10" onclick="deleteItem('${type}', ${index}, event)">×</span>`;
+            
+            div.onclick = (e) => { 
+                if(e.target.classList.contains('delete-btn')) return; 
+                if(type === 'post') loadPost(index); else loadProduct(index); 
+            };
+
+            div.addEventListener('dragstart', handleDragStart); div.addEventListener('dragover', handleDragOver); div.addEventListener('drop', handleDrop);
+            div.addEventListener('dragenter', (e) => div.classList.add('drag-over')); div.addEventListener('dragleave', (e) => div.classList.remove('drag-over'));
+            return div;
+        }
+
+        let dragSrcEl = null;
+        function handleDragStart(e) { dragSrcEl = this; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('sourceIndex', this.dataset.index); e.dataTransfer.setData('type', this.dataset.type); this.classList.add('dragging'); }
+        function handleDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; return false; }
+        function handleDrop(e) { e.stopPropagation(); const targetType = this.dataset.type; const sourceType = e.dataTransfer.getData('type'); if (targetType !== sourceType) return false; const sourceIndex = parseInt(e.dataTransfer.getData('sourceIndex')); const targetIndex = parseInt(this.dataset.index); if (dragSrcEl !== this) { const list = targetType === 'post' ? siteData.posts : siteData.products; const item = list[sourceIndex]; list.splice(sourceIndex, 1); list.splice(targetIndex, 0, item); renderSidebar(); } return false; }
+
+        // --- EDITORS ---
+
+        function loadStory() {
+            currentType = 'story'; currentEditingId = null;
+            document.getElementById('editor-panel').innerHTML = `
+                <h2 class="text-lg font-bold mb-3 text-[#4E3629] border-b pb-2">Edit Hudson's Story</h2>
+                <div class="space-y-4">
+                    <div><label class="text-xs font-bold uppercase text-gray-500">Title</label><input type="text" id="story-title" class="w-full border p-2 rounded text-sm" value="${siteData.story.title}"></div>
+                    <div class="bg-gray-100 p-2 rounded border border-gray-300"><label class="text-xs font-bold uppercase block mb-2 text-gray-500">Story Image</label><div class="flex items-center gap-3"><img id="img-preview" src="${siteData.story.image}" class="w-16 h-16 object-cover rounded bg-white border"><label class="custom-file-upload hover:bg-[#36251b]">Choose Image <input type="file" accept="image/*" onchange="handleImageUpload(this)"> </label></div></div>
+                    <div><label class="text-xs font-bold uppercase text-gray-500 mb-1 block">Story Content</label>${getToolbarHTML()}<div id="edit-content" class="editor-box" contenteditable="true">${siteData.story.content}</div></div>
+                </div>`;
+            attachListeners();
+        }
+
+        function loadFamily() {
+            currentType = 'family'; currentEditingId = null;
+            // FIX: Directly reference description. If undefined, use fallback.
+            const safeDesc = siteData.family.description || "";
+            document.getElementById('editor-panel').innerHTML = `
+                <h2 class="text-lg font-bold mb-3 text-[#4E3629] border-b pb-2">Edit Family Section</h2>
+                <div class="space-y-4">
+                    <div><label class="text-xs font-bold uppercase text-gray-500">Title</label><input type="text" id="fam-title" class="w-full border p-2 rounded text-sm" value="${siteData.family.title}"></div>
+                    <div><label class="text-xs font-bold uppercase text-gray-500">Description Text</label><input type="text" id="fam-desc" class="w-full border p-2 rounded text-sm" value="${safeDesc}"></div>
+                    <div><label class="text-xs font-bold uppercase text-gray-500">Button Text</label><input type="text" id="fam-btn" class="w-full border p-2 rounded text-sm" value="${siteData.family.buttonText}"></div>
+                    <div class="bg-gray-100 p-2 rounded border border-gray-300"><label class="text-xs font-bold uppercase block mb-2 text-gray-500">Family Image</label><div class="flex items-center gap-3"><img id="img-preview" src="${siteData.family.image}" class="w-16 h-16 object-cover rounded bg-white border"><label class="custom-file-upload hover:bg-[#36251b]">Choose Image <input type="file" accept="image/*" onchange="handleImageUpload(this)"> </label></div></div>
+                </div>`;
+            attachListeners();
+        }
+
+        function loadFooter() {
+            currentType = 'footer'; currentEditingId = null;
+            let rowsHtml = '';
+            siteData.footer.forEach((item, index) => {
+                rowsHtml += `<div class="flex gap-2 items-center mb-2">
+                    <input type="text" placeholder="Platform Name" class="w-1/3 border p-2 rounded text-sm" value="${item.platform}" oninput="updateFooterItem(${index}, 'platform', this.value)">
+                    <input type="text" placeholder="URL" class="w-2/3 border p-2 rounded text-sm" value="${item.url}" oninput="updateFooterItem(${index}, 'url', this.value)">
+                    <button class="text-red-500 font-bold px-2" onclick="removeFooterItem(${index})">×</button>
+                </div>`;
+            });
+
+            document.getElementById('editor-panel').innerHTML = `
+                <h2 class="text-lg font-bold mb-3 text-[#4E3629] border-b pb-2">Footer & Social Links</h2>
+                <div class="space-y-4">
+                    <p class="text-sm text-gray-600">Customize your social links below.</p>
+                    <div id="footer-rows">${rowsHtml}</div>
+                    <button onclick="addFooterItem()" class="bg-[#E6DCD2] text-[#4E3629] px-4 py-2 rounded text-sm font-bold">+ Add Link</button>
+                </div>`;
+        }
+
+        function updateFooterItem(index, key, val) {
+            siteData.footer[index][key] = val;
+            triggerUpdate();
+        }
+        function addFooterItem() {
+            siteData.footer.push({platform: "New Link", url: "#"});
+            loadFooter(); // Re-render form
+            triggerUpdate();
+        }
+        function removeFooterItem(index) {
+            siteData.footer.splice(index, 1);
+            loadFooter();
+            triggerUpdate();
+        }
+
+        function loadPost(index) {
+            currentEditingId = index; currentType = 'post';
+            const post = siteData.posts[index];
+            document.getElementById('editor-panel').innerHTML = `
+                <h2 class="text-lg font-bold mb-3 text-[#4E3629] border-b pb-2">Edit Post</h2>
+                <div class="space-y-4">
+                    <div><label class="text-xs font-bold uppercase text-gray-500">Title</label><input type="text" id="edit-title" class="w-full border p-2 rounded text-sm" value="${post.title}"></div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="text-xs font-bold uppercase text-gray-500">Date</label><input type="text" id="edit-date" class="w-full border p-2 rounded text-sm" value="${post.date}"></div>
+                        <div><label class="text-xs font-bold uppercase text-gray-500">Category</label><input type="text" id="edit-cat" class="w-full border p-2 rounded text-sm" value="${post.category}"></div>
+                    </div>
+                    <div class="bg-gray-100 p-2 rounded border border-gray-300"><label class="text-xs font-bold uppercase block mb-2 text-gray-500">Image</label><div class="flex items-center gap-3"><img id="img-preview" src="${post.image}" class="w-16 h-16 object-cover rounded bg-white border"><label class="custom-file-upload hover:bg-[#36251b]">Choose Image <input type="file" accept="image/*" onchange="handleImageUpload(this)"></label></div></div>
+                    <div><label class="text-xs font-bold uppercase text-gray-500 mb-1 block">Content</label>${getToolbarHTML()}<div id="edit-content" class="editor-box" contenteditable="true">${post.content}</div></div>
+                </div>`;
+            attachListeners();
+        }
+
+        function loadProduct(index) {
+            currentEditingId = index; currentType = 'product';
+            const prod = siteData.products[index];
+            document.getElementById('editor-panel').innerHTML = `
+                <h2 class="text-lg font-bold mb-3 text-[#4E3629] border-b pb-2">Edit Product</h2>
+                <div class="space-y-4">
+                    <div><label class="text-xs font-bold uppercase text-gray-500">Title</label><input type="text" id="prod-title" class="w-full border p-2 rounded text-sm" value="${prod.title}"></div>
+                    <div><label class="text-xs font-bold uppercase text-gray-500">Brand</label><input type="text" id="prod-brand" class="w-full border p-2 rounded text-sm" value="${prod.brand}"></div>
+                    <div class="bg-gray-100 p-2 rounded border border-gray-300"><label class="text-xs font-bold uppercase block mb-2 text-gray-500">Image</label><div class="flex items-center gap-3"><img id="img-preview" src="${prod.image}" class="w-16 h-16 object-cover rounded bg-white border"><label class="custom-file-upload hover:bg-[#36251b]">Choose Image <input type="file" accept="image/*" onchange="handleImageUpload(this)"></label></div></div>
+                    <div><label class="text-xs font-bold uppercase text-gray-500">Link</label><input type="text" id="prod-link" class="w-full border p-2 rounded text-sm" value="${prod.link}"></div>
+                </div>`;
+            attachListeners();
+        }
+
+        function getToolbarHTML() {
+            return `<div class="toolbar">
+                <div class="tool-group"><button class="tool-btn" onclick="formatDoc('undo')" title="Undo">↺</button><button class="tool-btn" onclick="formatDoc('redo')" title="Redo">↻</button></div>
+                <div class="tool-group"><select onchange="formatDoc('formatBlock', this.value); this.value=''" class="tool-select"><option value="">Style</option><option value="p">Normal</option><option value="h3">Heading Large</option><option value="h4">Heading Medium</option><option value="blockquote">Quote</option></select></div>
+                <div class="tool-group"><button class="tool-btn font-bold" onclick="formatDoc('bold')">B</button><button class="tool-btn italic" onclick="formatDoc('italic')">I</button><button class="tool-btn underline" onclick="formatDoc('underline')">U</button></div>
+                <div class="tool-group"><button class="tool-btn" onclick="formatDoc('justifyLeft')">⇤</button><button class="tool-btn" onclick="formatDoc('justifyCenter')">⇹</button></div>
+                <div class="tool-group"><button class="tool-btn" onclick="formatDoc('insertUnorderedList')">• List</button><button class="tool-btn" onclick="addLink()">🔗</button></div>
+            </div>`;
+        }
+
+        function attachListeners() {
+            const inputs = document.getElementById('editor-panel').querySelectorAll('input[type="text"]');
+            inputs.forEach(input => input.addEventListener('input', updateDataFromInputs));
+            const contentDiv = document.getElementById('edit-content');
+            if(contentDiv) contentDiv.addEventListener('input', updateDataFromInputs);
+        }
+
+        function updateDataFromInputs() {
+            if(currentType === 'post') {
+                const p = siteData.posts[currentEditingId];
+                p.title = document.getElementById('edit-title').value;
+                p.date = document.getElementById('edit-date').value;
+                p.category = document.getElementById('edit-cat').value;
+                p.content = document.getElementById('edit-content').innerHTML;
+                const sidebarItem = document.querySelector(`[data-index="${currentEditingId}"][data-type="post"] span.ml-2`); if(sidebarItem) sidebarItem.innerText = p.title;
+            } else if (currentType === 'product') {
+                const p = siteData.products[currentEditingId];
+                p.title = document.getElementById('prod-title').value;
+                p.brand = document.getElementById('prod-brand').value;
+                p.link = document.getElementById('prod-link').value;
+                const sidebarItem = document.querySelector(`[data-index="${currentEditingId}"][data-type="product"] span.ml-2`); if(sidebarItem) sidebarItem.innerText = p.title;
+            } else if (currentType === 'story') {
+                siteData.story.title = document.getElementById('story-title').value;
+                siteData.story.content = document.getElementById('edit-content').innerHTML;
+            } else if (currentType === 'family') {
+                siteData.family.title = document.getElementById('fam-title').value;
+                siteData.family.description = document.getElementById('fam-desc').value;
+                siteData.family.buttonText = document.getElementById('fam-btn').value;
+            } 
+            // Footer is handled by its own function
+            triggerUpdate(); 
+        }
+
+        function formatDoc(cmd, value=null) { document.execCommand(cmd, false, value); document.getElementById('edit-content').focus(); updateDataFromInputs(); }
+        function addLink() { const url = prompt("Enter URL:", "https://"); if (url) formatDoc('createLink', url); }
+
+        function createNewPost() { siteData.posts.unshift({ id: Date.now(), title: "New Story", category: "General", readTime: "5 min", date: "Jan 1, 2025", image: "https://via.placeholder.com/300", summary: "...", content: "<p>Start writing...</p>" }); renderSidebar(); loadPost(0); }
+        function createNewProduct() { siteData.products.unshift({ title: "New Item", brand: "Brand", image: "https://via.placeholder.com/300", link: "#" }); renderSidebar(); loadProduct(0); }
+        function deleteItem(type, index, e) { e.stopPropagation(); if(confirm("Delete this item?")) { if(type === 'post') siteData.posts.splice(index, 1); if(type === 'product') siteData.products.splice(index, 1); renderSidebar(); document.getElementById('editor-panel').innerHTML = ''; } }
+
+        function downloadNewData() {
+            const dataStr = "var siteData = " + JSON.stringify(siteData, null, 4) + ";";
+            const blob = new Blob([dataStr], { type: "text/javascript" });
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "content.js"; document.body.appendChild(a); a.click(); document.body.removeChild(a); alert("Downloaded! Replace 'content.js' in your folder with this new file.");
+        }
+
+        setTimeout(() => { renderSidebar(); }, 500);
+    </script>
+</body>
+</html>
