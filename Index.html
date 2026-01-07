@@ -99,7 +99,7 @@
             </div>
             <div class="w-full md:w-1/2 text-center md:text-left order-1 md:order-2">
                  <h2 id="family-title" class="text-5xl uppercase text-[#4E3629] heading-font mb-6 leading-tight">The Humans Behind the Hound</h2>
-                 <p id="family-desc" class="text-lg text-gray-800 mb-10 font-serif leading-relaxed">We aren't just owners...</p>
+                 <div id="family-desc" class="text-lg text-gray-800 mb-10 font-serif leading-relaxed blog-content"></div>
                  <button id="family-btn" onclick="openFamilyModal()" class="bg-[#4E3629] text-[#E6DCD2] px-12 py-5 uppercase tracking-widest text-sm font-bold hover:bg-[#36251b] transition shadow-xl rounded-sm transform hover:-translate-y-1">
                     Meet Hudson's Family
                  </button>
@@ -121,8 +121,8 @@
     <footer class="bg-[#C9B49E] border-t border-[#4E3629]/20 py-16">
         <div class="max-w-[95%] mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12">
             <div class="text-center md:text-left">
-                <h4 class="heading-font text-2xl uppercase mb-6 text-[#4E3629]">How's Hudson</h4>
-                <p class="text-base text-gray-900">© 2025 Adventure Dog Blog.</p>
+                <h4 id="footer-main-title" class="heading-font text-2xl uppercase mb-6 text-[#4E3629]">How's Hudson</h4>
+                <p id="footer-copyright" class="text-base text-gray-900">© 2025 Adventure Dog Blog.</p>
             </div>
             <div class="text-center md:text-left">
                 <h4 class="font-bold text-sm uppercase tracking-widest text-[#4E3629] mb-6">Read</h4>
@@ -140,8 +140,8 @@
             <div class="text-center md:text-left">
                 <h4 class="font-bold text-sm uppercase tracking-widest text-[#4E3629] mb-6">Legal</h4>
                 <ul class="space-y-3 text-base text-gray-900">
-                    <li><button onclick="alert('Privacy Policy text goes here.')" class="hover:text-[#4E3629] text-left hover:underline">Privacy Policy</button></li>
-                    <li><button onclick="alert('Terms of Service text goes here.')" class="hover:text-[#4E3629] text-left hover:underline">Terms of Service</button></li>
+                    <li><button onclick="openLegalModal('privacy')" class="hover:text-[#4E3629] text-left hover:underline">Privacy Policy</button></li>
+                    <li><button onclick="openLegalModal('terms')" class="hover:text-[#4E3629] text-left hover:underline">Terms of Service</button></li>
                 </ul>
             </div>
         </div>
@@ -154,7 +154,7 @@
                 <div class="relative bg-[#E6DCD2] text-left shadow-2xl rounded-lg sm:w-full sm:max-w-3xl border-2 border-[#4E3629]">
                     <button class="absolute top-4 right-4 z-10 text-gray-600 hover:text-[#4E3629] text-4xl" onclick="closeGenericModal()">&times;</button>
                     <div class="bg-[#E6DCD2]">
-                        <img id="modal-img" src="" class="w-full h-80 object-cover">
+                        <img id="modal-img" src="" class="w-full h-80 object-cover hidden">
                         <div class="px-8 py-10 sm:px-12">
                             <div id="modal-meta" class="flex items-center space-x-2 text-sm uppercase tracking-widest text-gray-600 mb-6 font-bold">
                                 <span id="modal-cat"></span><span>&bull;</span><span id="modal-date"></span>
@@ -195,13 +195,8 @@
                 document.getElementById('page-loader').style.display = 'none';
             }
 
-            // Look for global variable (var siteData)
-            if (typeof siteData !== 'undefined') {
-                activeData = siteData;
-            }
-            if (window.siteData) {
-                activeData = window.siteData;
-            }
+            if (typeof siteData !== 'undefined') activeData = siteData;
+            if (window.siteData) activeData = window.siteData;
             
             renderContent();
         });
@@ -216,23 +211,14 @@
         function renderContent() {
             if (!activeData) return;
 
-            // Posts
+            // Posts & Products
             const pGrid = document.getElementById('posts-grid');
             pGrid.innerHTML = '';
-            if(activeData.posts) {
-                activeData.posts.slice(0, 4).forEach((post, index) => {
-                    pGrid.innerHTML += createPostCard(post, index);
-                });
-            }
+            if(activeData.posts) activeData.posts.slice(0, 4).forEach((post, index) => pGrid.innerHTML += createPostCard(post, index));
 
-            // Products
             const prodGrid = document.getElementById('products-grid');
             prodGrid.innerHTML = '';
-            if(activeData.products) {
-                activeData.products.slice(0, 3).forEach(prod => {
-                    prodGrid.innerHTML += createProductCard(prod);
-                });
-            }
+            if(activeData.products) activeData.products.slice(0, 3).forEach(prod => prodGrid.innerHTML += createProductCard(prod));
 
             // Story
             if(activeData.story) {
@@ -241,19 +227,25 @@
                 if(activeData.story.image) document.getElementById('story-img').src = activeData.story.image;
             }
 
-            // Family Section (Fixed "Undefined" Error)
+            // Family Section
             if(activeData.family) {
                 if(document.getElementById('family-title')) document.getElementById('family-title').innerText = activeData.family.title;
-                if(document.getElementById('family-desc')) document.getElementById('family-desc').innerText = activeData.family.description; // Maps to .description correctly
+                // FIX: Use innerHTML here to interpret the Rich Text tags
+                if(document.getElementById('family-desc')) document.getElementById('family-desc').innerHTML = activeData.family.description; 
                 if(document.getElementById('family-btn')) document.getElementById('family-btn').innerText = activeData.family.buttonText;
                 if(activeData.family.image && document.getElementById('family-img')) document.getElementById('family-img').src = activeData.family.image;
             }
 
-            // Footer (Dynamic Array)
+            // Footer Text
+            if(activeData.footerText) {
+                if(document.getElementById('footer-main-title')) document.getElementById('footer-main-title').innerText = activeData.footerText.title;
+                if(document.getElementById('footer-copyright')) document.getElementById('footer-copyright').innerText = activeData.footerText.copyright;
+            }
+
+            // Footer Links
             const footerContainer = document.getElementById('footer-links-container');
             if (footerContainer && activeData.footer) {
                 footerContainer.innerHTML = '';
-                // Handle new array format
                 if (Array.isArray(activeData.footer)) {
                     activeData.footer.forEach(item => {
                         if (item.url && item.url.trim() !== "") {
@@ -261,12 +253,6 @@
                         }
                     });
                 } 
-                // Handle legacy object format fallback
-                else {
-                    if (activeData.footer.instagram) footerContainer.innerHTML += `<li><a href="${activeData.footer.instagram}" class="hover:text-[#4E3629] hover:underline">Instagram</a></li>`;
-                    if (activeData.footer.facebook) footerContainer.innerHTML += `<li><a href="${activeData.footer.facebook}" class="hover:text-[#4E3629] hover:underline">Facebook</a></li>`;
-                    if (activeData.footer.tiktok) footerContainer.innerHTML += `<li><a href="${activeData.footer.tiktok}" class="hover:text-[#4E3629] hover:underline">TikTok</a></li>`;
-                }
             }
         }
 
@@ -293,26 +279,44 @@
         // --- MODALS ---
         function openPost(index) {
             activePostIndex = index;
-            updateModalContent(activeData.posts[index], true);
+            updateModalContent(activeData.posts[index], true, true);
             document.getElementById('modal-generic').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
         }
 
         function openFamilyModal() {
-            // FIX: Create a temporary object that maps 'description' to 'content' for the modal
-            const rawFamily = activeData.family || { title: "Meet the Family", description: "Details coming soon...", image: "" };
+            // FIX: Use separate modalDescription field, fall back to main description if empty
+            const rawFamily = activeData.family;
             const familyModalData = {
                 title: rawFamily.title,
-                content: rawFamily.description, // Map description to content
-                image: rawFamily.image
+                content: rawFamily.modalDescription || rawFamily.description, 
+                image: rawFamily.modalImage || rawFamily.image
             };
-            updateModalContent(familyModalData, false);
+            updateModalContent(familyModalData, false, true);
             document.getElementById('modal-generic').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
         }
 
-        function updateModalContent(data, showMeta) {
-            document.getElementById('modal-img').src = data.image || 'https://via.placeholder.com/800x600';
+        function openLegalModal(type) {
+             const data = {
+                 title: type === 'privacy' ? 'Privacy Policy' : 'Terms of Service',
+                 content: type === 'privacy' ? activeData.footerText.privacy : activeData.footerText.terms,
+                 image: null 
+             };
+             updateModalContent(data, false, false);
+             document.getElementById('modal-generic').classList.remove('hidden');
+             document.body.style.overflow = 'hidden';
+        }
+
+        function updateModalContent(data, showMeta, showImage) {
+            const imgEl = document.getElementById('modal-img');
+            if(showImage && data.image) {
+                imgEl.src = data.image;
+                imgEl.classList.remove('hidden');
+            } else {
+                imgEl.classList.add('hidden');
+            }
+            
             document.getElementById('modal-title').innerText = data.title;
             document.getElementById('modal-body').innerHTML = data.content;
             
@@ -332,7 +336,6 @@
             document.body.style.overflow = 'auto';
         }
 
-        // View All Modal Logic
         function openAllModal(type) {
             const modal = document.getElementById('modal-all');
             const grid = document.getElementById('all-modal-grid');

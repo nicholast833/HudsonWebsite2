@@ -17,7 +17,7 @@
         .toolbar { display: flex; flex-wrap: wrap; gap: 5px; background: #e5e7eb; padding: 8px; border-radius: 6px 6px 0 0; border: 1px solid #ccc; border-bottom: none; }
         .tool-btn { background: white; border: 1px solid #ccc; cursor: pointer; padding: 4px 8px; border-radius: 4px; font-size: 14px; min-width: 32px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; color: #374151; }
         .tool-btn:hover { background: #4E3629; color: white; border-color: #4E3629; }
-        .editor-box { min-height: 300px; border: 1px solid #ccc; padding: 20px; background: white; border-radius: 0 0 6px 6px; overflow-y: auto; max-height: 50vh; font-family: 'Georgia', serif; line-height: 1.6; }
+        .editor-box { min-height: 150px; border: 1px solid #ccc; padding: 20px; background: white; border-radius: 0 0 6px 6px; overflow-y: auto; max-height: 40vh; font-family: 'Georgia', serif; line-height: 1.6; }
         .editor-box:focus { outline: 2px solid #4E3629; outline-offset: -2px; }
 
         .draggable-item { transition: all 0.2s; border: 1px solid transparent; background: white; }
@@ -36,7 +36,7 @@
         <h1 class="text-2xl font-bold text-[#4E3629]">How's Hudson Admin</h1>
         <div class="flex gap-4">
             <button onclick="togglePreview()" id="btn-toggle" class="px-4 py-2 rounded bg-[#4E3629] text-white text-sm font-bold shadow transition">Toggle Full Preview</button>
-            <button onclick="downloadNewData()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded shadow font-bold transition">💾 Save Changes</button>
+            <button onclick="saveData()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded shadow font-bold transition">💾 Save Changes</button>
         </div>
     </div>
 
@@ -79,27 +79,21 @@
     </div>
 
     <script>
-        // INIT: Check if siteData exists (handles const vs var issue)
+        // INIT
         if (typeof siteData === 'undefined') {
              var siteData = { posts: [], products: [] }; 
-             console.warn("siteData not found in window scope. Initializing empty.");
-        } else {
-             // Convert legacy footer object to array if needed
-             if (siteData.footer && !Array.isArray(siteData.footer)) {
-                 const newFooter = [];
-                 if(siteData.footer.instagram) newFooter.push({platform: "Instagram", url: siteData.footer.instagram});
-                 if(siteData.footer.facebook) newFooter.push({platform: "Facebook", url: siteData.footer.facebook});
-                 if(siteData.footer.tiktok) newFooter.push({platform: "TikTok", url: siteData.footer.tiktok});
-                 siteData.footer = newFooter;
-             }
+             console.warn("siteData not found. Initializing empty.");
         }
-
-        // DEFAULTS: Ensure fields exist
+        
+        // DEFAULTS
         if (!siteData.story) siteData.story = { title: "Hudson's Story", content: "<p>Write your story here...</p>", image: "HudsonStory.jpg" };
-        if (!siteData.family) siteData.family = { title: "The Humans Behind the Hound", description: "We aren't just owners; we are Hudson's support staff, photographers, and treat dispensers.", buttonText: "Meet Hudson's Family", image: "Family.jpg" };
+        if (!siteData.family) siteData.family = { title: "The Humans", description: "<p>We aren't just owners...</p>", modalDescription: "<p>More info...</p>", buttonText: "Meet Family", image: "Family.jpg", modalImage: "Family.jpg" };
         if (!siteData.footer) siteData.footer = [];
+        if (!siteData.footerText) siteData.footerText = { title: "How's Hudson", copyright: "© 2025.", privacy: "<p>Privacy...</p>", terms: "<p>Terms...</p>" };
 
         let debounceTimer;
+        let lastFocusedEditor = null; // Track which box to format
+
         function triggerUpdate() { clearTimeout(debounceTimer); debounceTimer = setTimeout(() => { updatePreview(); }, 300); }
 
         const resizer = document.getElementById('dragMe');
@@ -114,11 +108,11 @@
         function togglePreview() { isFullPreview = !isFullPreview; const btn = document.getElementById('btn-toggle'); if (isFullPreview) { leftPane.style.display = 'none'; resizer.style.display = 'none'; btn.innerText = "Exit Full Preview"; btn.classList.replace('bg-[#4E3629]', 'bg-gray-500'); } else { leftPane.style.display = 'flex'; resizer.style.display = 'flex'; btn.innerText = "Toggle Full Preview"; btn.classList.replace('bg-gray-500', 'bg-[#4E3629]'); } }
 
         let currentEditingId = null;
-        let currentType = null; 
+        let currentType = null;
 
         function updatePreview() { document.getElementById('preview-frame').contentWindow.postMessage(siteData, '*'); }
 
-        function handleImageUpload(input) {
+        function handleImageUpload(input, target) {
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
@@ -126,8 +120,13 @@
                     if(currentType === 'post') siteData.posts[currentEditingId].image = base64String;
                     if(currentType === 'product') siteData.products[currentEditingId].image = base64String;
                     if(currentType === 'story') siteData.story.image = base64String;
-                    if(currentType === 'family') siteData.family.image = base64String;
-                    document.getElementById('img-preview').src = base64String;
+                    if(currentType === 'family') {
+                        if (target === 'main') siteData.family.image = base64String;
+                        if (target === 'modal') siteData.family.modalImage = base64String;
+                    }
+                    const previewId = target ? `img-preview-${target}` : 'img-preview';
+                    const el = document.getElementById(previewId);
+                    if(el) el.src = base64String;
                     triggerUpdate();
                 };
                 reader.readAsDataURL(input.files[0]);
@@ -139,18 +138,8 @@
             const prodList = document.getElementById('product-list');
             postList.innerHTML = ''; prodList.innerHTML = '';
             
-            if (siteData.posts && siteData.posts.length > 0) {
-                siteData.posts.forEach((post, index) => postList.appendChild(createDraggableItem(post.title, index, 'post')));
-            } else {
-                postList.innerHTML = '<div class="text-xs text-gray-400 italic">No posts found.</div>';
-            }
-
-            if (siteData.products && siteData.products.length > 0) {
-                siteData.products.forEach((prod, index) => prodList.appendChild(createDraggableItem(prod.title, index, 'product')));
-            } else {
-                prodList.innerHTML = '<div class="text-xs text-gray-400 italic">No products found.</div>';
-            }
-            
+            if (siteData.posts) siteData.posts.forEach((post, index) => postList.appendChild(createDraggableItem(post.title, index, 'post')));
+            if (siteData.products) siteData.products.forEach((prod, index) => prodList.appendChild(createDraggableItem(prod.title, index, 'product')));
             updatePreview();
         }
 
@@ -159,12 +148,7 @@
             div.className = "draggable-item p-2 rounded flex justify-between items-center text-sm cursor-pointer border border-gray-200 shadow-sm mb-1";
             div.draggable = true; div.dataset.index = index; div.dataset.type = type;
             div.innerHTML = `<div class="flex items-center w-full overflow-hidden pointer-events-none"><span class="drag-handle text-gray-400 mr-2">⋮⋮</span><span class="truncate select-none ml-2 text-gray-700 font-medium">${title}</span></div><span class="delete-btn text-xs text-red-400 font-bold px-2 hover:text-red-600 z-10" onclick="deleteItem('${type}', ${index}, event)">×</span>`;
-            
-            div.onclick = (e) => { 
-                if(e.target.classList.contains('delete-btn')) return; 
-                if(type === 'post') loadPost(index); else loadProduct(index); 
-            };
-
+            div.onclick = (e) => { if(e.target.classList.contains('delete-btn')) return; if(type === 'post') loadPost(index); else loadProduct(index); };
             div.addEventListener('dragstart', handleDragStart); div.addEventListener('dragover', handleDragOver); div.addEventListener('drop', handleDrop);
             div.addEventListener('dragenter', (e) => div.classList.add('drag-over')); div.addEventListener('dragleave', (e) => div.classList.remove('drag-over'));
             return div;
@@ -177,6 +161,8 @@
 
         // --- EDITORS ---
 
+        function trackFocus(id) { lastFocusedEditor = id; }
+
         function loadStory() {
             currentType = 'story'; currentEditingId = null;
             document.getElementById('editor-panel').innerHTML = `
@@ -184,23 +170,56 @@
                 <div class="space-y-4">
                     <div><label class="text-xs font-bold uppercase text-gray-500">Title</label><input type="text" id="story-title" class="w-full border p-2 rounded text-sm" value="${siteData.story.title}"></div>
                     <div class="bg-gray-100 p-2 rounded border border-gray-300"><label class="text-xs font-bold uppercase block mb-2 text-gray-500">Story Image</label><div class="flex items-center gap-3"><img id="img-preview" src="${siteData.story.image}" class="w-16 h-16 object-cover rounded bg-white border"><label class="custom-file-upload hover:bg-[#36251b]">Choose Image <input type="file" accept="image/*" onchange="handleImageUpload(this)"> </label></div></div>
-                    <div><label class="text-xs font-bold uppercase text-gray-500 mb-1 block">Story Content</label>${getToolbarHTML()}<div id="edit-content" class="editor-box" contenteditable="true">${siteData.story.content}</div></div>
+                    <div><label class="text-xs font-bold uppercase text-gray-500 mb-1 block">Story Content</label>${getToolbarHTML()}<div id="edit-content" class="editor-box" contenteditable="true" onfocus="trackFocus('edit-content')">${siteData.story.content}</div></div>
                 </div>`;
+            lastFocusedEditor = 'edit-content';
             attachListeners();
         }
 
         function loadFamily() {
             currentType = 'family'; currentEditingId = null;
-            // FIX: Directly reference description. If undefined, use fallback.
-            const safeDesc = siteData.family.description || "";
+            const modalImg = siteData.family.modalImage || siteData.family.image;
+            // Fallback for older data that might lack modalDescription
+            const modalDesc = siteData.family.modalDescription || "<p>Details about the family...</p>";
+            
             document.getElementById('editor-panel').innerHTML = `
                 <h2 class="text-lg font-bold mb-3 text-[#4E3629] border-b pb-2">Edit Family Section</h2>
                 <div class="space-y-4">
                     <div><label class="text-xs font-bold uppercase text-gray-500">Title</label><input type="text" id="fam-title" class="w-full border p-2 rounded text-sm" value="${siteData.family.title}"></div>
-                    <div><label class="text-xs font-bold uppercase text-gray-500">Description Text</label><input type="text" id="fam-desc" class="w-full border p-2 rounded text-sm" value="${safeDesc}"></div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-gray-100 p-2 rounded border border-gray-300">
+                            <label class="text-xs font-bold uppercase block mb-2 text-gray-500">Main Display Image</label>
+                            <div class="flex items-center gap-2">
+                                <img id="img-preview-main" src="${siteData.family.image}" class="w-12 h-12 object-cover rounded bg-white border">
+                                <label class="custom-file-upload hover:bg-[#36251b] text-xs">Upload Main <input type="file" accept="image/*" onchange="handleImageUpload(this, 'main')"> </label>
+                            </div>
+                        </div>
+                        <div class="bg-gray-100 p-2 rounded border border-gray-300">
+                            <label class="text-xs font-bold uppercase block mb-2 text-gray-500">Inside Modal Image</label>
+                            <div class="flex items-center gap-2">
+                                <img id="img-preview-modal" src="${modalImg}" class="w-12 h-12 object-cover rounded bg-white border">
+                                <label class="custom-file-upload hover:bg-[#36251b] text-xs">Upload Modal <input type="file" accept="image/*" onchange="handleImageUpload(this, 'modal')"> </label>
+                            </div>
+                        </div>
+                    </div>
+
                     <div><label class="text-xs font-bold uppercase text-gray-500">Button Text</label><input type="text" id="fam-btn" class="w-full border p-2 rounded text-sm" value="${siteData.family.buttonText}"></div>
-                    <div class="bg-gray-100 p-2 rounded border border-gray-300"><label class="text-xs font-bold uppercase block mb-2 text-gray-500">Family Image</label><div class="flex items-center gap-3"><img id="img-preview" src="${siteData.family.image}" class="w-16 h-16 object-cover rounded bg-white border"><label class="custom-file-upload hover:bg-[#36251b]">Choose Image <input type="file" accept="image/*" onchange="handleImageUpload(this)"> </label></div></div>
+                    
+                    <div>
+                        <label class="text-xs font-bold uppercase text-gray-500 mb-1 block">Description (Main Page)</label>
+                        ${getToolbarHTML()}
+                        <div id="edit-content-main" class="editor-box" contenteditable="true" onfocus="trackFocus('edit-content-main')">${siteData.family.description}</div>
+                    </div>
+
+                    <div>
+                        <label class="text-xs font-bold uppercase text-gray-500 mb-1 block">Description (Inside Button Popup)</label>
+                        ${getToolbarHTML()}
+                        <div id="edit-content-modal" class="editor-box" contenteditable="true" onfocus="trackFocus('edit-content-modal')">${modalDesc}</div>
+                    </div>
+
                 </div>`;
+            lastFocusedEditor = 'edit-content-main';
             attachListeners();
         }
 
@@ -218,26 +237,49 @@
             document.getElementById('editor-panel').innerHTML = `
                 <h2 class="text-lg font-bold mb-3 text-[#4E3629] border-b pb-2">Footer & Social Links</h2>
                 <div class="space-y-4">
-                    <p class="text-sm text-gray-600">Customize your social links below.</p>
-                    <div id="footer-rows">${rowsHtml}</div>
-                    <button onclick="addFooterItem()" class="bg-[#E6DCD2] text-[#4E3629] px-4 py-2 rounded text-sm font-bold">+ Add Link</button>
+                    <div class="p-3 bg-gray-50 border rounded">
+                        <label class="text-xs font-bold uppercase text-gray-500 mb-2 block">Branding</label>
+                        <div class="grid grid-cols-2 gap-4 mb-2">
+                            <div><span class="text-xs text-gray-400">Footer Title</span><input type="text" id="foot-title" class="w-full border p-2 rounded text-sm" value="${siteData.footerText.title}"></div>
+                            <div><span class="text-xs text-gray-400">Copyright Text</span><input type="text" id="foot-copy" class="w-full border p-2 rounded text-sm" value="${siteData.footerText.copyright}"></div>
+                        </div>
+                    </div>
+                    <div class="p-3 bg-gray-50 border rounded">
+                         <label class="text-xs font-bold uppercase text-gray-500 mb-2 block">Social Links</label>
+                         <div id="footer-rows">${rowsHtml}</div>
+                         <button onclick="addFooterItem()" class="mt-2 bg-[#E6DCD2] text-[#4E3629] px-3 py-1 rounded text-xs font-bold">+ Add Link</button>
+                    </div>
+                    <div class="p-3 bg-gray-50 border rounded">
+                        <label class="text-xs font-bold uppercase text-gray-500 mb-2 block">Legal Pages</label>
+                        <div class="flex gap-4">
+                            <button onclick="loadLegal('privacy')" class="w-1/2 border border-[#4E3629] text-[#4E3629] hover:bg-[#4E3629] hover:text-white py-2 rounded text-sm transition">Edit Privacy Policy</button>
+                            <button onclick="loadLegal('terms')" class="w-1/2 border border-[#4E3629] text-[#4E3629] hover:bg-[#4E3629] hover:text-white py-2 rounded text-sm transition">Edit Terms of Service</button>
+                        </div>
+                    </div>
                 </div>`;
+            document.getElementById('foot-title').addEventListener('input', (e) => { siteData.footerText.title = e.target.value; triggerUpdate(); });
+            document.getElementById('foot-copy').addEventListener('input', (e) => { siteData.footerText.copyright = e.target.value; triggerUpdate(); });
         }
 
-        function updateFooterItem(index, key, val) {
-            siteData.footer[index][key] = val;
-            triggerUpdate();
+        function loadLegal(type) {
+            currentType = type === 'privacy' ? 'legal-privacy' : 'legal-terms';
+            const title = type === 'privacy' ? "Privacy Policy" : "Terms of Service";
+            const content = type === 'privacy' ? siteData.footerText.privacy : siteData.footerText.terms;
+            document.getElementById('editor-panel').innerHTML = `
+                <div class="flex justify-between items-center border-b pb-2 mb-3">
+                    <h2 class="text-lg font-bold text-[#4E3629]">Edit ${title}</h2>
+                    <button onclick="loadFooter()" class="text-sm text-gray-500 hover:text-gray-800">← Back to Footer</button>
+                </div>
+                <div class="space-y-4">
+                    <div><label class="text-xs font-bold uppercase text-gray-500 mb-1 block">Page Content</label>${getToolbarHTML()}<div id="edit-content" class="editor-box" contenteditable="true" onfocus="trackFocus('edit-content')">${content}</div></div>
+                </div>`;
+            lastFocusedEditor = 'edit-content';
+            attachListeners();
         }
-        function addFooterItem() {
-            siteData.footer.push({platform: "New Link", url: "#"});
-            loadFooter(); // Re-render form
-            triggerUpdate();
-        }
-        function removeFooterItem(index) {
-            siteData.footer.splice(index, 1);
-            loadFooter();
-            triggerUpdate();
-        }
+
+        function updateFooterItem(index, key, val) { siteData.footer[index][key] = val; triggerUpdate(); }
+        function addFooterItem() { siteData.footer.push({platform: "New Link", url: "#"}); loadFooter(); triggerUpdate(); }
+        function removeFooterItem(index) { siteData.footer.splice(index, 1); loadFooter(); triggerUpdate(); }
 
         function loadPost(index) {
             currentEditingId = index; currentType = 'post';
@@ -251,8 +293,9 @@
                         <div><label class="text-xs font-bold uppercase text-gray-500">Category</label><input type="text" id="edit-cat" class="w-full border p-2 rounded text-sm" value="${post.category}"></div>
                     </div>
                     <div class="bg-gray-100 p-2 rounded border border-gray-300"><label class="text-xs font-bold uppercase block mb-2 text-gray-500">Image</label><div class="flex items-center gap-3"><img id="img-preview" src="${post.image}" class="w-16 h-16 object-cover rounded bg-white border"><label class="custom-file-upload hover:bg-[#36251b]">Choose Image <input type="file" accept="image/*" onchange="handleImageUpload(this)"></label></div></div>
-                    <div><label class="text-xs font-bold uppercase text-gray-500 mb-1 block">Content</label>${getToolbarHTML()}<div id="edit-content" class="editor-box" contenteditable="true">${post.content}</div></div>
+                    <div><label class="text-xs font-bold uppercase text-gray-500 mb-1 block">Content</label>${getToolbarHTML()}<div id="edit-content" class="editor-box" contenteditable="true" onfocus="trackFocus('edit-content')">${post.content}</div></div>
                 </div>`;
+            lastFocusedEditor = 'edit-content';
             attachListeners();
         }
 
@@ -283,8 +326,9 @@
         function attachListeners() {
             const inputs = document.getElementById('editor-panel').querySelectorAll('input[type="text"]');
             inputs.forEach(input => input.addEventListener('input', updateDataFromInputs));
-            const contentDiv = document.getElementById('edit-content');
-            if(contentDiv) contentDiv.addEventListener('input', updateDataFromInputs);
+            // Listen to all contenteditable divs
+            const divs = document.getElementById('editor-panel').querySelectorAll('div[contenteditable="true"]');
+            divs.forEach(div => div.addEventListener('input', updateDataFromInputs));
         }
 
         function updateDataFromInputs() {
@@ -306,24 +350,49 @@
                 siteData.story.content = document.getElementById('edit-content').innerHTML;
             } else if (currentType === 'family') {
                 siteData.family.title = document.getElementById('fam-title').value;
-                siteData.family.description = document.getElementById('fam-desc').value;
+                siteData.family.description = document.getElementById('edit-content-main').innerHTML;
+                siteData.family.modalDescription = document.getElementById('edit-content-modal').innerHTML;
                 siteData.family.buttonText = document.getElementById('fam-btn').value;
-            } 
-            // Footer is handled by its own function
+            } else if (currentType === 'legal-privacy') {
+                siteData.footerText.privacy = document.getElementById('edit-content').innerHTML;
+            } else if (currentType === 'legal-terms') {
+                siteData.footerText.terms = document.getElementById('edit-content').innerHTML;
+            }
             triggerUpdate(); 
         }
 
-        function formatDoc(cmd, value=null) { document.execCommand(cmd, false, value); document.getElementById('edit-content').focus(); updateDataFromInputs(); }
+        function formatDoc(cmd, value=null) { 
+            // Focus on the specific editor box active last time
+            if(lastFocusedEditor && document.getElementById(lastFocusedEditor)) {
+                document.getElementById(lastFocusedEditor).focus();
+            }
+            document.execCommand(cmd, false, value); 
+            updateDataFromInputs(); 
+        }
         function addLink() { const url = prompt("Enter URL:", "https://"); if (url) formatDoc('createLink', url); }
 
         function createNewPost() { siteData.posts.unshift({ id: Date.now(), title: "New Story", category: "General", readTime: "5 min", date: "Jan 1, 2025", image: "https://via.placeholder.com/300", summary: "...", content: "<p>Start writing...</p>" }); renderSidebar(); loadPost(0); }
         function createNewProduct() { siteData.products.unshift({ title: "New Item", brand: "Brand", image: "https://via.placeholder.com/300", link: "#" }); renderSidebar(); loadProduct(0); }
         function deleteItem(type, index, e) { e.stopPropagation(); if(confirm("Delete this item?")) { if(type === 'post') siteData.posts.splice(index, 1); if(type === 'product') siteData.products.splice(index, 1); renderSidebar(); document.getElementById('editor-panel').innerHTML = ''; } }
 
-        function downloadNewData() {
+        async function saveData() {
             const dataStr = "var siteData = " + JSON.stringify(siteData, null, 4) + ";";
-            const blob = new Blob([dataStr], { type: "text/javascript" });
-            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "content.js"; document.body.appendChild(a); a.click(); document.body.removeChild(a); alert("Downloaded! Replace 'content.js' in your folder with this new file.");
+            if (window.showSaveFilePicker) {
+                try {
+                    const handle = await window.showSaveFilePicker({
+                        id: 'hudson-admin-save',
+                        suggestedName: 'content.js',
+                        types: [{ description: 'JavaScript File', accept: {'text/javascript': ['.js']} }],
+                    });
+                    const writable = await handle.createWritable();
+                    await writable.write(dataStr);
+                    await writable.close();
+                    alert("Saved! The content.js file has been updated.");
+                } catch (err) { if (err.name !== 'AbortError') { console.error(err); alert("Error saving file."); } }
+            } else {
+                const blob = new Blob([dataStr], { type: "text/javascript" });
+                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "content.js"; document.body.appendChild(a); a.click(); document.body.removeChild(a); alert("File downloaded.");
+            }
         }
 
         setTimeout(() => { renderSidebar(); }, 500);
