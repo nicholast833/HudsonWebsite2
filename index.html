@@ -361,22 +361,13 @@
         }
 
         function closeGenericModal() {
-            activePostIndex = null;
-            document.getElementById('modal-generic').classList.add('hidden');
-            document.body.style.overflow = 'auto';
+        activePostIndex = null;
+        document.getElementById('modal-generic').classList.add('hidden');
+        document.body.style.overflow = 'auto';
 
-            // Reset URL to base path (remove slug/query)
-            let basePath = window.location.pathname;
-            
-            // If current path IS the slug (friendly URL), go back to index.html or root
-            const currentSlug = window.location.pathname.substring(1);
-            const match = activeData.posts.find(p => p.slug === currentSlug);
-            
-            if(match) {
-                basePath = 'Index.html'; // Or '/'
-            }
-
-            window.history.pushState({ path: basePath }, '', basePath);
+        // UPDATED: Always reset URL to the clean root path '/'
+        // This removes "Index.html", "index.html", or any slug like "/field-freedom"
+        window.history.pushState({ path: '/' }, '', '/');
         }
 
         function openAllModal(type) {
