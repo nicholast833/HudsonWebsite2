@@ -92,7 +92,7 @@
         if (!siteData.footerText) siteData.footerText = { title: "How's Hudson", copyright: "© 2025.", privacy: "<p>Privacy...</p>", terms: "<p>Terms...</p>" };
 
         let debounceTimer;
-        let lastFocusedEditor = null; // Track which box to format
+        let lastFocusedEditor = null;
 
         function triggerUpdate() { clearTimeout(debounceTimer); debounceTimer = setTimeout(() => { updatePreview(); }, 300); }
 
@@ -179,14 +179,11 @@
         function loadFamily() {
             currentType = 'family'; currentEditingId = null;
             const modalImg = siteData.family.modalImage || siteData.family.image;
-            // Fallback for older data that might lack modalDescription
             const modalDesc = siteData.family.modalDescription || "<p>Details about the family...</p>";
-            
             document.getElementById('editor-panel').innerHTML = `
                 <h2 class="text-lg font-bold mb-3 text-[#4E3629] border-b pb-2">Edit Family Section</h2>
                 <div class="space-y-4">
                     <div><label class="text-xs font-bold uppercase text-gray-500">Title</label><input type="text" id="fam-title" class="w-full border p-2 rounded text-sm" value="${siteData.family.title}"></div>
-                    
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="bg-gray-100 p-2 rounded border border-gray-300">
                             <label class="text-xs font-bold uppercase block mb-2 text-gray-500">Main Display Image</label>
@@ -203,21 +200,17 @@
                             </div>
                         </div>
                     </div>
-
                     <div><label class="text-xs font-bold uppercase text-gray-500">Button Text</label><input type="text" id="fam-btn" class="w-full border p-2 rounded text-sm" value="${siteData.family.buttonText}"></div>
-                    
                     <div>
                         <label class="text-xs font-bold uppercase text-gray-500 mb-1 block">Description (Main Page)</label>
                         ${getToolbarHTML()}
                         <div id="edit-content-main" class="editor-box" contenteditable="true" onfocus="trackFocus('edit-content-main')">${siteData.family.description}</div>
                     </div>
-
                     <div>
                         <label class="text-xs font-bold uppercase text-gray-500 mb-1 block">Description (Inside Button Popup)</label>
                         ${getToolbarHTML()}
                         <div id="edit-content-modal" class="editor-box" contenteditable="true" onfocus="trackFocus('edit-content-modal')">${modalDesc}</div>
                     </div>
-
                 </div>`;
             lastFocusedEditor = 'edit-content-main';
             attachListeners();
@@ -233,7 +226,6 @@
                     <button class="text-red-500 font-bold px-2" onclick="removeFooterItem(${index})">×</button>
                 </div>`;
             });
-
             document.getElementById('editor-panel').innerHTML = `
                 <h2 class="text-lg font-bold mb-3 text-[#4E3629] border-b pb-2">Footer & Social Links</h2>
                 <div class="space-y-4">
@@ -284,10 +276,21 @@
         function loadPost(index) {
             currentEditingId = index; currentType = 'post';
             const post = siteData.posts[index];
+            const slug = post.slug || "";
             document.getElementById('editor-panel').innerHTML = `
                 <h2 class="text-lg font-bold mb-3 text-[#4E3629] border-b pb-2">Edit Post</h2>
                 <div class="space-y-4">
                     <div><label class="text-xs font-bold uppercase text-gray-500">Title</label><input type="text" id="edit-title" class="w-full border p-2 rounded text-sm" value="${post.title}"></div>
+                    
+                    <div class="bg-blue-50 border border-blue-200 p-2 rounded">
+                        <label class="text-xs font-bold uppercase text-blue-500 block mb-1">Link Slug (Friendly URL)</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="edit-slug" class="flex-1 border p-2 rounded text-sm text-gray-600" value="${slug}" placeholder="e.g. hudson-swims">
+                            <button onclick="generateSlug()" class="text-xs bg-blue-100 text-blue-700 px-2 rounded hover:bg-blue-200" title="Generate from Title">🪄 Auto</button>
+                        </div>
+                        <p class="text-[10px] text-gray-400 mt-1">Visit directly: yoursite.com/index.html?post=${slug || index}</p>
+                    </div>
+
                     <div class="grid grid-cols-2 gap-4">
                         <div><label class="text-xs font-bold uppercase text-gray-500">Date</label><input type="text" id="edit-date" class="w-full border p-2 rounded text-sm" value="${post.date}"></div>
                         <div><label class="text-xs font-bold uppercase text-gray-500">Category</label><input type="text" id="edit-cat" class="w-full border p-2 rounded text-sm" value="${post.category}"></div>
@@ -326,9 +329,20 @@
         function attachListeners() {
             const inputs = document.getElementById('editor-panel').querySelectorAll('input[type="text"]');
             inputs.forEach(input => input.addEventListener('input', updateDataFromInputs));
-            // Listen to all contenteditable divs
             const divs = document.getElementById('editor-panel').querySelectorAll('div[contenteditable="true"]');
             divs.forEach(div => div.addEventListener('input', updateDataFromInputs));
+        }
+
+        function generateSlug() {
+            const titleInput = document.getElementById('edit-title');
+            const slugInput = document.getElementById('edit-slug');
+            if(titleInput && slugInput) {
+                // Convert title to slug: lowercase, replace spaces/special chars with hyphens
+                const raw = titleInput.value;
+                const slug = raw.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-');
+                slugInput.value = slug;
+                updateDataFromInputs();
+            }
         }
 
         function updateDataFromInputs() {
@@ -338,6 +352,11 @@
                 p.date = document.getElementById('edit-date').value;
                 p.category = document.getElementById('edit-cat').value;
                 p.content = document.getElementById('edit-content').innerHTML;
+                
+                // Save Slug
+                const sInput = document.getElementById('edit-slug');
+                if(sInput) p.slug = sInput.value;
+
                 const sidebarItem = document.querySelector(`[data-index="${currentEditingId}"][data-type="post"] span.ml-2`); if(sidebarItem) sidebarItem.innerText = p.title;
             } else if (currentType === 'product') {
                 const p = siteData.products[currentEditingId];
@@ -362,7 +381,6 @@
         }
 
         function formatDoc(cmd, value=null) { 
-            // Focus on the specific editor box active last time
             if(lastFocusedEditor && document.getElementById(lastFocusedEditor)) {
                 document.getElementById(lastFocusedEditor).focus();
             }
@@ -371,7 +389,7 @@
         }
         function addLink() { const url = prompt("Enter URL:", "https://"); if (url) formatDoc('createLink', url); }
 
-        function createNewPost() { siteData.posts.unshift({ id: Date.now(), title: "New Story", category: "General", readTime: "5 min", date: "Jan 1, 2025", image: "https://via.placeholder.com/300", summary: "...", content: "<p>Start writing...</p>" }); renderSidebar(); loadPost(0); }
+        function createNewPost() { siteData.posts.unshift({ id: Date.now(), slug: "new-story", title: "New Story", category: "General", readTime: "5 min", date: "Jan 1, 2025", image: "https://via.placeholder.com/300", summary: "...", content: "<p>Start writing...</p>" }); renderSidebar(); loadPost(0); }
         function createNewProduct() { siteData.products.unshift({ title: "New Item", brand: "Brand", image: "https://via.placeholder.com/300", link: "#" }); renderSidebar(); loadProduct(0); }
         function deleteItem(type, index, e) { e.stopPropagation(); if(confirm("Delete this item?")) { if(type === 'post') siteData.posts.splice(index, 1); if(type === 'product') siteData.products.splice(index, 1); renderSidebar(); document.getElementById('editor-panel').innerHTML = ''; } }
 

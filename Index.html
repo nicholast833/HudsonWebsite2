@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How's Hudson | Adventure Dog Blog</title>
+    <link rel="icon" type="image/png" href="Dog.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="content.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fjalla+One&family=Lora:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+        h1, h2, h3, h4, .heading-font { font-family: 'Fjalla One', sans-serif; letter-spacing: 0.05em; }
+        body { font-family: 'Lora', serif; scroll-behavior: smooth; }
+        
+        .blog-content h3 { font-family: 'Fjalla One', sans-serif; font-size: 1.5rem; color: #4E3629; margin-top: 2rem; margin-bottom: 1rem; text-transform: uppercase; }
+        .blog-content p { margin-bottom: 1.5rem; line-height: 1.8; }
+        .blog-content ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1.5rem; }
+        
+        .modal-scroll::-webkit-scrollbar { width: 8px; }
+        .modal-scroll::-webkit-scrollbar-track { background: #C9B49E; }
+        .modal-scroll::-webkit-scrollbar-thumb { background: #4E3629; border-radius: 4px; }
+    </style>
+</head>
+<body class="text-gray-900 bg-[#C9B49E]">
+
+    <div id="page-loader" class="fixed inset-0 z-[100] bg-[#C9B49E] flex flex-col justify-center items-center transition-opacity duration-700 ease-out">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-[#4E3629] mb-4"></div>
+        <h2 class="heading-font text-[#4E3629] text-xl tracking-widest animate-pulse">Loading Adventure...</h2>
+    </div>
+
+    <nav class="bg-[#4E3629] sticky top-0 z-50 border-b border-[#36251b] shadow-md">
+        <div class="max-w-[95%] mx-auto px-6">
+            <div class="flex justify-between items-center h-24">
+                <div class="flex-shrink-0 flex items-center">
+                    <a href="#" class="heading-font text-3xl text-[#E6DCD2] uppercase tracking-widest">How's Hudson</a>
+                </div>
+                <div class="hidden md:flex space-x-10">
+                    <a href="#latest" class="text-[#E6DCD2] hover:text-white uppercase font-bold tracking-widest transition">Highlights</a>
+                    <a href="#essentials" class="text-[#E6DCD2] hover:text-white uppercase font-bold tracking-widest transition">Essentials</a>
+                    <a href="#story" class="text-[#E6DCD2] hover:text-white uppercase font-bold tracking-widest transition">Our Story</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="relative h-[85vh] w-full overflow-hidden">
+        <img src="HudsonHolly.jpg" alt="Hudson" class="absolute inset-0 w-full h-full object-cover">
+        <div class="absolute inset-0 bg-black/30"></div>
+        <div class="absolute inset-0 flex flex-col justify-center items-center text-center px-4">
+            <h1 class="text-white text-5xl md:text-8xl uppercase mb-6 drop-shadow-xl heading-font">Tales from Hudson's Trail</h1>
+            <a href="#latest" class="bg-[#E6DCD2] text-[#4E3629] px-10 py-5 uppercase tracking-widest font-bold shadow-2xl rounded-sm hover:bg-white transition">Read Latest</a>
+        </div>
+    </div>
+
+    <div id="latest" class="bg-[#C9B49E] py-20 scroll-mt-24">
+        <div class="max-w-[95%] mx-auto px-6">
+            <div class="text-center mb-12">
+                <h2 class="text-5xl uppercase text-[#4E3629] heading-font">Highlights</h2>
+            </div>
+            
+            <div id="posts-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-16"></div>
+            
+            <div class="text-center">
+                <button onclick="openAllModal('posts')" class="bg-[#4E3629] text-[#E6DCD2] px-10 py-4 uppercase tracking-widest text-sm font-bold hover:bg-[#36251b] transition shadow-lg rounded-sm">
+                    View All Posts
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="essentials" class="bg-[#C9B49E] py-16 scroll-mt-24 border-t border-[#4E3629]/10">
+        <div class="max-w-[95%] mx-auto px-6">
+            <div class="text-center mb-12">
+                <h2 class="text-5xl uppercase text-[#4E3629] heading-font">Essentials</h2>
+            </div>
+            
+            <div id="products-grid" class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16"></div>
+            
+            <div class="text-center">
+                <button onclick="openAllModal('products')" class="bg-[#4E3629] text-[#E6DCD2] px-10 py-4 uppercase tracking-widest text-sm font-bold hover:bg-[#36251b] transition shadow-lg rounded-sm">
+                    View All Essentials
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="story" class="max-w-5xl mx-auto px-4 py-24 text-center scroll-mt-24">
+        <div class="aspect-video w-full overflow-hidden mb-10 shadow-2xl border-8 border-[#E6DCD2] rounded-lg transform rotate-1 hover:rotate-0 transition duration-500">
+            <img id="story-img" src="HudsonStory.jpg" class="w-full h-full object-cover object-[50%_25%]">
+        </div>
+        <h2 id="story-title" class="text-5xl uppercase text-[#4E3629] mb-6 heading-font">Hudson's Story</h2>
+        <div id="story-body" class="prose prose-lg mx-auto text-gray-900 mb-10"></div>
+    </div>
+
+    <div id="family" class="bg-[#E6DCD2] py-24 border-t border-[#4E3629]/10">
+        <div class="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center gap-16">
+            <div class="w-full md:w-1/2 order-2 md:order-1">
+                 <img id="family-img" src="Family.jpg" class="w-full h-96 object-cover rounded-lg shadow-2xl border-4 border-[#4E3629] rotate-2 hover:rotate-0 transition duration-500">
+            </div>
+            <div class="w-full md:w-1/2 text-center md:text-left order-1 md:order-2">
+                 <h2 id="family-title" class="text-5xl uppercase text-[#4E3629] heading-font mb-6 leading-tight">The Humans Behind the Hound</h2>
+                 <div id="family-desc" class="text-lg text-gray-800 mb-10 font-serif leading-relaxed blog-content"></div>
+                 <button id="family-btn" onclick="openFamilyModal()" class="bg-[#4E3629] text-[#E6DCD2] px-12 py-5 uppercase tracking-widest text-sm font-bold hover:bg-[#36251b] transition shadow-xl rounded-sm transform hover:-translate-y-1">
+                    Meet Hudson's Family
+                 </button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-[#C9B49E] border-t border-[#4E3629]/20 py-16">
+        <div class="max-w-[95%] mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12">
+            <div class="text-center md:text-left">
+                <h4 id="footer-main-title" class="heading-font text-2xl uppercase mb-6 text-[#4E3629]">How's Hudson</h4>
+                <p id="footer-copyright" class="text-base text-gray-900">© 2025 Adventure Dog Blog.</p>
+            </div>
+            <div class="text-center md:text-left">
+                <h4 class="font-bold text-sm uppercase tracking-widest text-[#4E3629] mb-6">Read</h4>
+                <ul class="space-y-3 text-base text-gray-900">
+                    <li><a href="#latest" class="hover:text-[#4E3629] hover:underline">Highlights</a></li>
+                    <li><a href="#essentials" class="hover:text-[#4E3629] hover:underline">Essentials</a></li>
+                    <li><a href="#story" class="hover:text-[#4E3629] hover:underline">Our Story</a></li>
+                </ul>
+            </div>
+            <div class="text-center md:text-left">
+                <h4 class="font-bold text-sm uppercase tracking-widest text-[#4E3629] mb-6">Connect</h4>
+                <ul id="footer-links-container" class="space-y-3 text-base text-gray-900">
+                    </ul>
+            </div>
+            <div class="text-center md:text-left">
+                <h4 class="font-bold text-sm uppercase tracking-widest text-[#4E3629] mb-6">Legal</h4>
+                <ul class="space-y-3 text-base text-gray-900">
+                    <li><button onclick="openLegalModal('privacy')" class="hover:text-[#4E3629] text-left hover:underline">Privacy Policy</button></li>
+                    <li><button onclick="openLegalModal('terms')" class="hover:text-[#4E3629] text-left hover:underline">Terms of Service</button></li>
+                </ul>
+            </div>
+        </div>
+    </footer>
+
+    <div id="modal-generic" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 bg-[#4E3629] bg-opacity-90 backdrop-blur-sm" onclick="closeGenericModal()"></div>
+        <div class="fixed inset-0 z-10 overflow-y-auto modal-scroll">
+            <div class="flex min-h-full items-center justify-center p-4">
+                <div class="relative bg-[#E6DCD2] text-left shadow-2xl rounded-lg sm:w-full sm:max-w-3xl border-2 border-[#4E3629]">
+                    <button class="absolute top-4 right-4 z-10 text-gray-600 hover:text-[#4E3629] text-4xl" onclick="closeGenericModal()">&times;</button>
+                    <div class="bg-[#E6DCD2]">
+                        <img id="modal-img" src="" class="w-full h-80 object-cover hidden">
+                        <div class="px-8 py-10 sm:px-12">
+                            <div id="modal-meta" class="flex items-center space-x-2 text-sm uppercase tracking-widest text-gray-600 mb-6 font-bold">
+                                <span id="modal-cat"></span><span>&bull;</span><span id="modal-date"></span>
+                            </div>
+                            <h2 id="modal-title" class="text-4xl text-[#4E3629] mb-8 heading-font uppercase leading-tight"></h2>
+                            <div id="modal-body" class="blog-content prose prose-lg prose-stone max-w-none text-gray-900"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-all" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 bg-[#4E3629] bg-opacity-90 backdrop-blur-sm" onclick="closeAllModal()"></div>
+        <div class="fixed inset-0 z-10 overflow-y-auto modal-scroll">
+            <div class="flex min-h-full items-center justify-center p-4">
+                <div class="relative bg-[#E6DCD2] text-left shadow-2xl rounded-lg sm:w-full sm:max-w-5xl border-2 border-[#4E3629] p-8">
+                    <button class="absolute top-4 right-4 text-gray-600 hover:text-[#4E3629] text-4xl" onclick="closeAllModal()">&times;</button>
+                    <h2 id="all-modal-title" class="text-4xl text-[#4E3629] mb-10 heading-font uppercase text-center border-b-2 border-[#4E3629]/10 pb-4">All Items</h2>
+                    <div id="all-modal-grid" class="grid grid-cols-1 md:grid-cols-2 gap-8"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const inIframe = window.self !== window.top;
+        let activePostIndex = null;
+        let activeData = null;
+
+        window.addEventListener('load', function() {
+            if(!inIframe) {
+                const loader = document.getElementById('page-loader');
+                loader.classList.add('opacity-0');
+                setTimeout(() => { loader.style.display = 'none'; }, 700);
+            } else {
+                document.getElementById('page-loader').style.display = 'none';
+            }
+
+            if (typeof siteData !== 'undefined') activeData = siteData;
+            if (window.siteData) activeData = window.siteData;
+            
+            renderContent();
+
+            // DEEP LINKING LOGIC
+            // 1. Check Query Params (?post=...)
+            const urlParams = new URLSearchParams(window.location.search);
+            let targetIndex = -1;
+
+            if (urlParams.has('post')) {
+                const val = urlParams.get('post');
+                targetIndex = findPostIndex(val);
+            } else {
+                // 2. Check Path (e.g. /hudson-swims) if no query param
+                const pathSlug = window.location.pathname.substring(1); // Remove leading slash
+                if(pathSlug && pathSlug.toLowerCase() !== 'index.html' && pathSlug !== '') {
+                    targetIndex = findPostIndex(pathSlug);
+                }
+            }
+
+            if (targetIndex !== -1) openPost(targetIndex);
+        });
+
+        window.addEventListener('message', function(event) {
+            if (event.data && (event.data.posts || event.data.products)) {
+                activeData = event.data;
+                renderContent();
+            }
+        });
+
+        function findPostIndex(identifier) {
+            if (!activeData || !activeData.posts) return -1;
+            
+            // Is it a direct index number?
+            if (!isNaN(identifier) && activeData.posts[identifier]) return parseInt(identifier);
+            
+            // Is it a slug string?
+            return activeData.posts.findIndex(p => p.slug === identifier);
+        }
+
+        function renderContent() {
+            if (!activeData) return;
+
+            // Posts & Products
+            const pGrid = document.getElementById('posts-grid');
+            pGrid.innerHTML = '';
+            if(activeData.posts) activeData.posts.slice(0, 4).forEach((post, index) => pGrid.innerHTML += createPostCard(post, index));
+
+            const prodGrid = document.getElementById('products-grid');
+            prodGrid.innerHTML = '';
+            if(activeData.products) activeData.products.slice(0, 3).forEach(prod => prodGrid.innerHTML += createProductCard(prod));
+
+            // Story
+            if(activeData.story) {
+                document.getElementById('story-title').innerText = activeData.story.title || "Hudson's Story";
+                document.getElementById('story-body').innerHTML = activeData.story.content || "Story content goes here.";
+                if(activeData.story.image) document.getElementById('story-img').src = activeData.story.image;
+            }
+
+            // Family Section
+            if(activeData.family) {
+                if(document.getElementById('family-title')) document.getElementById('family-title').innerText = activeData.family.title;
+                if(document.getElementById('family-desc')) document.getElementById('family-desc').innerHTML = activeData.family.description; 
+                if(document.getElementById('family-btn')) document.getElementById('family-btn').innerText = activeData.family.buttonText;
+                if(activeData.family.image && document.getElementById('family-img')) document.getElementById('family-img').src = activeData.family.image;
+            }
+
+            // Footer Text
+            if(activeData.footerText) {
+                if(document.getElementById('footer-main-title')) document.getElementById('footer-main-title').innerText = activeData.footerText.title;
+                if(document.getElementById('footer-copyright')) document.getElementById('footer-copyright').innerText = activeData.footerText.copyright;
+            }
+
+            // Footer Links
+            const footerContainer = document.getElementById('footer-links-container');
+            if (footerContainer && activeData.footer) {
+                footerContainer.innerHTML = '';
+                if (Array.isArray(activeData.footer)) {
+                    activeData.footer.forEach(item => {
+                        if (item.url && item.url.trim() !== "") {
+                            footerContainer.innerHTML += `<li><a href="${item.url}" target="_blank" class="hover:text-[#4E3629] hover:underline">${item.platform}</a></li>`;
+                        }
+                    });
+                } 
+            }
+        }
+
+        function createPostCard(post, index) {
+            return `<div class="group cursor-pointer bg-[#E6DCD2] p-4 rounded-lg shadow-lg hover:shadow-2xl hover:-translate-y-1 transition duration-300" onclick="openPost(${index})">
+                <div class="aspect-square overflow-hidden bg-gray-300 mb-5 rounded-md"><img src="${post.image}" class="w-full h-full object-cover group-hover:opacity-90 transition duration-500 transform group-hover:scale-105"></div>
+                <h3 class="text-xl font-bold text-[#4E3629] group-hover:underline font-serif leading-tight">${post.title}</h3>
+                <p class="text-base text-gray-600 mt-2">${post.category}</p>
+            </div>`;
+        }
+
+        function createProductCard(prod) {
+            return `<a href="${prod.link}" target="_blank" class="group relative h-[500px] overflow-hidden cursor-pointer block shadow-xl border-4 border-[#E6DCD2] rounded-lg">
+                <img src="${prod.image}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                <div class="absolute inset-0 bg-gradient-to-t from-[#4E3629]/90 to-transparent opacity-90 group-hover:opacity-100 transition duration-300"></div>
+                <div class="absolute bottom-0 left-0 right-0 text-center p-8">
+                    <p class="text-[#E6DCD2] italic font-serif mb-2 text-lg">${prod.brand}</p>
+                    <h3 class="text-white text-3xl uppercase font-bold mb-4 heading-font">${prod.title}</h3>
+                    <button class="mt-2 px-8 py-3 bg-[#E6DCD2] text-[#4E3629] uppercase text-sm font-bold tracking-widest hover:bg-white transition shadow-lg rounded-sm">Buy on Amazon</button>
+                </div>
+            </a>`;
+        }
+
+        // --- MODALS ---
+        function openPost(index) {
+            activePostIndex = index;
+            const post = activeData.posts[index];
+            updateModalContent(post, true, true);
+            document.getElementById('modal-generic').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+
+            // URL Update: Prefer slug, fallback to index
+            let newUrl;
+            const slug = post.slug || index;
+
+            // Simple approach: Use query param for maximum compatibility unless we are already on a clean path
+            if (window.location.search.includes('post=')) {
+                 newUrl = `${window.location.pathname}?post=${slug}`;
+            } else {
+                 // Try to push the friendly URL.
+                 newUrl = slug.toString(); 
+            }
+            
+            window.history.pushState({ path: newUrl }, '', newUrl);
+        }
+
+        function openFamilyModal() {
+            const rawFamily = activeData.family;
+            const familyModalData = {
+                title: rawFamily.title,
+                content: rawFamily.modalDescription || rawFamily.description, 
+                image: rawFamily.modalImage || rawFamily.image
+            };
+            updateModalContent(familyModalData, false, true);
+            document.getElementById('modal-generic').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function openLegalModal(type) {
+             const data = {
+                 title: type === 'privacy' ? 'Privacy Policy' : 'Terms of Service',
+                 content: type === 'privacy' ? activeData.footerText.privacy : activeData.footerText.terms,
+                 image: null 
+             };
+             updateModalContent(data, false, false);
+             document.getElementById('modal-generic').classList.remove('hidden');
+             document.body.style.overflow = 'hidden';
+        }
+
+        function updateModalContent(data, showMeta, showImage) {
+            const imgEl = document.getElementById('modal-img');
+            if(showImage && data.image) {
+                imgEl.src = data.image;
+                imgEl.classList.remove('hidden');
+            } else {
+                imgEl.classList.add('hidden');
+            }
+            
+            document.getElementById('modal-title').innerText = data.title;
+            document.getElementById('modal-body').innerHTML = data.content;
+            
+            const metaDiv = document.getElementById('modal-meta');
+            if(showMeta) {
+                metaDiv.style.display = 'flex';
+                document.getElementById('modal-cat').innerText = data.category;
+                document.getElementById('modal-date').innerText = data.date;
+            } else {
+                metaDiv.style.display = 'none';
+            }
+        }
+
+        function closeGenericModal() {
+            activePostIndex = null;
+            document.getElementById('modal-generic').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+
+            // Reset URL to base path (remove slug/query)
+            let basePath = window.location.pathname;
+            
+            // If current path IS the slug (friendly URL), go back to index.html or root
+            const currentSlug = window.location.pathname.substring(1);
+            const match = activeData.posts.find(p => p.slug === currentSlug);
+            
+            if(match) {
+                basePath = 'Index.html'; // Or '/'
+            }
+
+            window.history.pushState({ path: basePath }, '', basePath);
+        }
+
+        function openAllModal(type) {
+            const modal = document.getElementById('modal-all');
+            const grid = document.getElementById('all-modal-grid');
+            const title = document.getElementById('all-modal-title');
+            grid.innerHTML = '';
+            
+            if(type === 'posts') {
+                title.innerText = "All Adventure Logs";
+                activeData.posts.forEach((post, index) => {
+                    grid.innerHTML += `<div class="flex gap-4 cursor-pointer hover:bg-[#C9B49E]/40 p-2 rounded" onclick="openPost(${index}); closeAllModal();">
+                        <img src="${post.image}" class="w-24 h-24 object-cover rounded shadow-sm border border-[#4E3629]/20">
+                        <div><h4 class="font-bold text-[#4E3629] text-lg">${post.title}</h4><p class="text-sm text-gray-700">${post.date}</p></div>
+                    </div>`;
+                });
+            } else {
+                title.innerText = "All Essentials";
+                activeData.products.forEach(prod => {
+                    grid.innerHTML += `<a href="${prod.link}" target="_blank" class="flex gap-4 cursor-pointer hover:bg-[#C9B49E]/40 p-2 rounded">
+                        <img src="${prod.image}" class="w-24 h-24 object-cover rounded shadow-sm border border-[#4E3629]/20">
+                        <div><h4 class="font-bold text-[#4E3629] text-lg">${prod.title}</h4><p class="text-sm text-gray-700">${prod.brand}</p><p class="text-[#4E3629] font-bold text-xs mt-1 uppercase tracking-wide">View on Amazon &rarr;</p></div>
+                    </a>`;
+                });
+            }
+            modal.classList.remove('hidden');
+        }
+        function closeAllModal() { document.getElementById('modal-all').classList.add('hidden'); }
+    </script>
+</body>
+</html>

@@ -8,7 +8,8 @@ var siteData = {
             "date": "January 10, 2025",
             "image": "Field.jpg",
             "summary": "A reliable recall isn't just a cool trick; it's a safety feature.",
-            "content": "<p>A reliable recall isn't just a cool trick; it's a safety feature. It's the invisible leash that keeps your dog safe in the wilderness.</p><h3>Why Recall Fails</h3><ul><li><strong>Distraction Levels:</strong> Start small, then build up.</li><li><strong>High Value Rewards:</strong> Use the good treats!</li></ul>"
+            "content": "<p>A reliable recall isn't just a cool trick; it's a safety feature. It's the invisible leash that keeps your dog safe in the wilderness.</p><h3>Why Recall Fails</h3><ul><li><strong>Distraction Levels:</strong> Start small, then build up.</li><li><strong>High Value Rewards:</strong> Use the good treats!</li></ul>",
+            "slug": "field-freedom-off-leash-basics"
         },
         {
             "id": 2,
