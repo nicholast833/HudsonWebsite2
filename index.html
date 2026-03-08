@@ -55,7 +55,8 @@
     <div id="latest" class="bg-[#C9B49E] py-20 scroll-mt-24">
         <div class="max-w-[95%] mx-auto px-6">
             <div class="text-center mb-12">
-                <h2 class="text-5xl uppercase text-[#4E3629] heading-font">Highlights</h2>
+                <h2 id="highlights-title" class="text-5xl uppercase text-[#4E3629] heading-font">Highlights</h2>
+                <p id="highlights-disclaimer" class="text-sm text-[#4E3629]/80 font-serif italic mt-3 hidden"></p>
             </div>
             
             <div id="posts-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-16"></div>
@@ -71,7 +72,8 @@
     <div id="essentials" class="bg-[#C9B49E] py-16 scroll-mt-24 border-t border-[#4E3629]/10">
         <div class="max-w-[95%] mx-auto px-6">
             <div class="text-center mb-12">
-                <h2 class="text-5xl uppercase text-[#4E3629] heading-font">Essentials</h2>
+                <h2 id="essentials-title" class="text-5xl uppercase text-[#4E3629] heading-font">Essentials</h2>
+                <p id="essentials-disclaimer" class="text-sm text-[#4E3629]/80 font-serif italic mt-3 hidden"></p>
             </div>
             
             <div id="products-grid" class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16"></div>
@@ -190,7 +192,6 @@
             renderContent();
 
             // DEEP LINKING LOGIC
-            // 1. Check Query Params (?post=...)
             const urlParams = new URLSearchParams(window.location.search);
             let targetIndex = -1;
 
@@ -198,8 +199,7 @@
                 const val = urlParams.get('post');
                 targetIndex = findPostIndex(val);
             } else {
-                // 2. Check Path (e.g. /hudson-swims) if no query param
-                const pathSlug = window.location.pathname.substring(1); // Remove leading slash
+                const pathSlug = window.location.pathname.substring(1); 
                 if(pathSlug && pathSlug.toLowerCase() !== 'index.html' && pathSlug !== '') {
                     targetIndex = findPostIndex(pathSlug);
                 }
@@ -217,16 +217,34 @@
 
         function findPostIndex(identifier) {
             if (!activeData || !activeData.posts) return -1;
-            
-            // Is it a direct index number?
             if (!isNaN(identifier) && activeData.posts[identifier]) return parseInt(identifier);
-            
-            // Is it a slug string?
             return activeData.posts.findIndex(p => p.slug === identifier);
         }
 
         function renderContent() {
             if (!activeData) return;
+
+            // Titles & Disclaimers
+            if(activeData.highlights) {
+                const hTitle = document.getElementById('highlights-title');
+                const hDisc = document.getElementById('highlights-disclaimer');
+                if(hTitle) hTitle.innerText = activeData.highlights.title || "Highlights";
+                if(hDisc) {
+                    hDisc.innerText = activeData.highlights.disclaimer || "";
+                    if(activeData.highlights.disclaimer) hDisc.classList.remove('hidden');
+                    else hDisc.classList.add('hidden');
+                }
+            }
+            if(activeData.essentials) {
+                const eTitle = document.getElementById('essentials-title');
+                const eDisc = document.getElementById('essentials-disclaimer');
+                if(eTitle) eTitle.innerText = activeData.essentials.title || "Essentials";
+                if(eDisc) {
+                    eDisc.innerText = activeData.essentials.disclaimer || "";
+                    if(activeData.essentials.disclaimer) eDisc.classList.remove('hidden');
+                    else eDisc.classList.add('hidden');
+                }
+            }
 
             // Posts & Products
             const pGrid = document.getElementById('posts-grid');
@@ -300,18 +318,13 @@
             document.getElementById('modal-generic').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
 
-            // URL Update: Prefer slug, fallback to index
             let newUrl;
             const slug = post.slug || index;
-
-            // Simple approach: Use query param for maximum compatibility unless we are already on a clean path
             if (window.location.search.includes('post=')) {
                  newUrl = `${window.location.pathname}?post=${slug}`;
             } else {
-                 // Try to push the friendly URL.
                  newUrl = slug.toString(); 
             }
-            
             window.history.pushState({ path: newUrl }, '', newUrl);
         }
 
@@ -361,13 +374,10 @@
         }
 
         function closeGenericModal() {
-        activePostIndex = null;
-        document.getElementById('modal-generic').classList.add('hidden');
-        document.body.style.overflow = 'auto';
-
-        // UPDATED: Always reset URL to the clean root path '/'
-        // This removes "Index.html", "index.html", or any slug like "/field-freedom"
-        window.history.pushState({ path: '/' }, '', '/');
+            activePostIndex = null;
+            document.getElementById('modal-generic').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+            window.history.pushState({ path: '/' }, '', '/');
         }
 
         function openAllModal(type) {

@@ -99,5 +99,13 @@ var siteData = {
         "copyright": "© 2025 Adventure Dog Blog.",
         "privacy": "<h3>Privacy Policy</h3><p>Your privacy is important to us. We do not sell your data to third parties. We only collect data to improve your experience on our site.</p>",
         "terms": "<h3>Terms of Service</h3><p>By using this website, you agree to be a good human. Treat dogs with respect, and always pick up after your pets.</p>"
+    },
+    "highlights": {
+        "title": "Highlights",
+        "disclaimer": ""
+    },
+    "essentials": {
+        "title": "Essentials",
+        "disclaimer": "(Disclosure: As an Amazon Associate, I earn from qualifying purchases.)"
     }
 };

@@ -47,6 +47,8 @@
                 <div class="overflow-y-auto flex-1 pr-1">
                     <p class="text-xs text-gray-500 mb-2 uppercase font-bold tracking-wider">Site Settings</p>
                     <div class="space-y-1 mb-4">
+                        <div onclick="loadHighlights()" class="p-2 rounded bg-gray-50 hover:bg-gray-200 cursor-pointer text-sm font-bold text-gray-700">✨ Edit Highlights Section</div>
+                        <div onclick="loadEssentials()" class="p-2 rounded bg-gray-50 hover:bg-gray-200 cursor-pointer text-sm font-bold text-gray-700">🛍️ Edit Essentials Section</div>
                         <div onclick="loadStory()" class="p-2 rounded bg-gray-50 hover:bg-gray-200 cursor-pointer text-sm font-bold text-gray-700">📖 Edit Hudson's Story</div>
                         <div onclick="loadFamily()" class="p-2 rounded bg-gray-50 hover:bg-gray-200 cursor-pointer text-sm font-bold text-gray-700">👥 Edit Family Section</div>
                         <div onclick="loadFooter()" class="p-2 rounded bg-gray-50 hover:bg-gray-200 cursor-pointer text-sm font-bold text-gray-700">🔗 Edit Footer & Socials</div>
@@ -86,6 +88,8 @@
         }
         
         // DEFAULTS
+        if (!siteData.highlights) siteData.highlights = { title: "Highlights", disclaimer: "" };
+        if (!siteData.essentials) siteData.essentials = { title: "Essentials", disclaimer: "(Disclosure: As an Amazon Associate, I earn from qualifying purchases.)" };
         if (!siteData.story) siteData.story = { title: "Hudson's Story", content: "<p>Write your story here...</p>", image: "HudsonStory.jpg" };
         if (!siteData.family) siteData.family = { title: "The Humans", description: "<p>We aren't just owners...</p>", modalDescription: "<p>More info...</p>", buttonText: "Meet Family", image: "Family.jpg", modalImage: "Family.jpg" };
         if (!siteData.footer) siteData.footer = [];
@@ -162,6 +166,28 @@
         // --- EDITORS ---
 
         function trackFocus(id) { lastFocusedEditor = id; }
+
+        function loadHighlights() {
+            currentType = 'highlights'; currentEditingId = null;
+            document.getElementById('editor-panel').innerHTML = `
+                <h2 class="text-lg font-bold mb-3 text-[#4E3629] border-b pb-2">Edit Highlights Section</h2>
+                <div class="space-y-4">
+                    <div><label class="text-xs font-bold uppercase text-gray-500">Section Title</label><input type="text" id="high-title" class="w-full border p-2 rounded text-sm" value="${siteData.highlights.title}"></div>
+                    <div><label class="text-xs font-bold uppercase text-gray-500">Disclaimer / Subtitle</label><input type="text" id="high-disc" class="w-full border p-2 rounded text-sm" value="${siteData.highlights.disclaimer}" placeholder="Optional text underneath header"></div>
+                </div>`;
+            attachListeners();
+        }
+
+        function loadEssentials() {
+            currentType = 'essentials'; currentEditingId = null;
+            document.getElementById('editor-panel').innerHTML = `
+                <h2 class="text-lg font-bold mb-3 text-[#4E3629] border-b pb-2">Edit Essentials Section</h2>
+                <div class="space-y-4">
+                    <div><label class="text-xs font-bold uppercase text-gray-500">Section Title</label><input type="text" id="ess-title" class="w-full border p-2 rounded text-sm" value="${siteData.essentials.title}"></div>
+                    <div><label class="text-xs font-bold uppercase text-gray-500">Disclaimer Text</label><input type="text" id="ess-disc" class="w-full border p-2 rounded text-sm" value="${siteData.essentials.disclaimer}" placeholder="(Disclosure: As an Amazon Associate, I earn from qualifying purchases.)"></div>
+                </div>`;
+            attachListeners();
+        }
 
         function loadStory() {
             currentType = 'story'; currentEditingId = null;
@@ -337,7 +363,6 @@
             const titleInput = document.getElementById('edit-title');
             const slugInput = document.getElementById('edit-slug');
             if(titleInput && slugInput) {
-                // Convert title to slug: lowercase, replace spaces/special chars with hyphens
                 const raw = titleInput.value;
                 const slug = raw.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-');
                 slugInput.value = slug;
@@ -353,7 +378,6 @@
                 p.category = document.getElementById('edit-cat').value;
                 p.content = document.getElementById('edit-content').innerHTML;
                 
-                // Save Slug
                 const sInput = document.getElementById('edit-slug');
                 if(sInput) p.slug = sInput.value;
 
@@ -364,6 +388,12 @@
                 p.brand = document.getElementById('prod-brand').value;
                 p.link = document.getElementById('prod-link').value;
                 const sidebarItem = document.querySelector(`[data-index="${currentEditingId}"][data-type="product"] span.ml-2`); if(sidebarItem) sidebarItem.innerText = p.title;
+            } else if (currentType === 'highlights') {
+                siteData.highlights.title = document.getElementById('high-title').value;
+                siteData.highlights.disclaimer = document.getElementById('high-disc').value;
+            } else if (currentType === 'essentials') {
+                siteData.essentials.title = document.getElementById('ess-title').value;
+                siteData.essentials.disclaimer = document.getElementById('ess-disc').value;
             } else if (currentType === 'story') {
                 siteData.story.title = document.getElementById('story-title').value;
                 siteData.story.content = document.getElementById('edit-content').innerHTML;
