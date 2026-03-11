@@ -17,8 +17,13 @@
         .toolbar { display: flex; flex-wrap: wrap; gap: 5px; background: #e5e7eb; padding: 8px; border-radius: 6px 6px 0 0; border: 1px solid #ccc; border-bottom: none; }
         .tool-btn { background: white; border: 1px solid #ccc; cursor: pointer; padding: 4px 8px; border-radius: 4px; font-size: 14px; min-width: 32px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; color: #374151; }
         .tool-btn:hover { background: #4E3629; color: white; border-color: #4E3629; }
-        .editor-box { min-height: 150px; border: 1px solid #ccc; padding: 20px; background: white; border-radius: 0 0 6px 6px; overflow-y: auto; max-height: 40vh; font-family: 'Georgia', serif; line-height: 1.6; }
+        .editor-box { min-height: 150px; border: 1px solid #ccc; padding: 20px; background: white; border-radius: 0 0 6px 6px; overflow-y: auto; height: 50vh; max-height: none; font-family: 'Georgia', serif; line-height: 1.6; resize: vertical; }
         .editor-box:focus { outline: 2px solid #4E3629; outline-offset: -2px; }
+        .editor-box img { max-width: 100%; display: inline-block; cursor: pointer; transition: outline 0.2s; }
+        .editor-box img.selected-img { outline: 3px solid #4E3629; }
+        
+        #img-toolbar { display: none; position: absolute; background: white; border: 1px solid #ccc; padding: 4px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 9999; gap: 4px; flex-wrap: wrap; max-width: 250px; }
+        #img-toolbar.active { display: flex; }
 
         .draggable-item { transition: all 0.2s; border: 1px solid transparent; background: white; }
         .draggable-item:hover { background-color: #f3f4f6; border-color: #d1d5db; }
@@ -78,6 +83,16 @@
             <div class="absolute top-0 left-0 bg-[#4E3629] text-white text-xs px-2 py-1 z-10 opacity-90 shadow">Live Preview</div>
             <iframe id="preview-frame" src="Index.html" class="w-full h-full border-none block"></iframe>
         </div>
+    </div>
+
+    <div id="img-toolbar">
+        <button onclick="setImgFit('fill')" class="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded border">Stretch</button>
+        <button onclick="setImgFit('cover')" class="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded border">Crop</button>
+        <button onclick="setImgFit('contain')" class="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded border">Contain</button>
+        <button onclick="changeImgWidth(20)" class="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded border">W+</button>
+        <button onclick="changeImgWidth(-20)" class="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded border">W-</button>
+        <button onclick="changeImgHeight(20)" class="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded border">H+</button>
+        <button onclick="changeImgHeight(-20)" class="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded border">H-</button>
     </div>
 
     <script>
@@ -346,9 +361,27 @@
             return `<div class="toolbar">
                 <div class="tool-group"><button class="tool-btn" onclick="formatDoc('undo')" title="Undo">↺</button><button class="tool-btn" onclick="formatDoc('redo')" title="Redo">↻</button></div>
                 <div class="tool-group"><select onchange="formatDoc('formatBlock', this.value); this.value=''" class="tool-select"><option value="">Style</option><option value="p">Normal</option><option value="h3">Heading Large</option><option value="h4">Heading Medium</option><option value="blockquote">Quote</option></select></div>
+                <div class="tool-group flex items-center gap-1 border-r pr-2 mr-1">
+                    <input type="color" onchange="formatDoc('foreColor', this.value)" title="Text Color" class="w-6 h-6 p-0 border-0 cursor-pointer bg-transparent">
+                </div>
                 <div class="tool-group"><button class="tool-btn font-bold" onclick="formatDoc('bold')">B</button><button class="tool-btn italic" onclick="formatDoc('italic')">I</button><button class="tool-btn underline" onclick="formatDoc('underline')">U</button></div>
                 <div class="tool-group"><button class="tool-btn" onclick="formatDoc('justifyLeft')">⇤</button><button class="tool-btn" onclick="formatDoc('justifyCenter')">⇹</button></div>
                 <div class="tool-group"><button class="tool-btn" onclick="formatDoc('insertUnorderedList')">• List</button><button class="tool-btn" onclick="addLink()">🔗</button></div>
+                <div class="tool-group flex items-center gap-1 border-l pl-2 ml-1">
+                    <label class="tool-btn cursor-pointer whitespace-nowrap" title="Insert Image">
+                        🖼️ Img
+                        <input type="file" accept="image/*" class="hidden" onchange="insertInlineImage(this)">
+                    </label>
+                </div>
+                <div class="tool-group flex items-center gap-1 border-l pl-2 ml-1">
+                    <select onchange="insertColumns(this.value); this.value=''" class="tool-select text-xs">
+                        <option value="">Cols...</option>
+                        <option value="1">1 Col</option>
+                        <option value="2">2 Cols</option>
+                        <option value="3">3 Cols</option>
+                        <option value="4">4 Cols</option>
+                    </select>
+                </div>
             </div>`;
         }
 
@@ -417,11 +450,87 @@
             document.execCommand(cmd, false, value); 
             updateDataFromInputs(); 
         }
-        function addLink() { const url = prompt("Enter URL:", "https://"); if (url) formatDoc('createLink', url); }
+        function addLink() { 
+            const url = prompt("Enter URL:", "https://"); 
+            if (url) {
+                formatDoc('createLink', url); 
+                if(lastFocusedEditor && document.getElementById(lastFocusedEditor)) {
+                    document.getElementById(lastFocusedEditor).querySelectorAll('a:not([target])').forEach(a => {
+                        a.setAttribute("target", "_blank");
+                    });
+                    updateDataFromInputs();
+                }
+            }
+        }
+
+        function insertInlineImage(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    formatDoc('insertImage', e.target.result);
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+            input.value = '';
+        }
+
+        function insertColumns(numCols) {
+            if (!numCols) return;
+            let colsHtml = `<div class="grid grid-cols-${numCols} gap-4 mb-4">`;
+            for(let i=0; i<numCols; i++) {
+                colsHtml += `<div class="border border-dashed border-gray-400 p-2 min-h-[50px]">Col ${i+1}</div>`;
+            }
+            colsHtml += `</div><p><br></p>`;
+            formatDoc('insertHTML', colsHtml);
+        }
+
+        let activeImage = null;
+        document.addEventListener('click', function(e) {
+            const tb = document.getElementById('img-toolbar');
+            if(tb) {
+                if(e.target.tagName === 'IMG' && e.target.closest('.editor-box')) {
+                    document.querySelectorAll('.editor-box img.selected-img').forEach(img => img.classList.remove('selected-img'));
+                    activeImage = e.target;
+                    activeImage.classList.add('selected-img');
+                    
+                    const rect = activeImage.getBoundingClientRect();
+                    tb.style.top = (window.scrollY + rect.top - tb.offsetHeight - 5) + 'px';
+                    tb.style.left = (window.scrollX + rect.left) + 'px';
+                    tb.classList.add('active');
+                    
+                    if(!activeImage.style.width) activeImage.style.width = activeImage.clientWidth + 'px';
+                    if(!activeImage.style.height) activeImage.style.height = activeImage.clientHeight + 'px';
+                } else if (!e.target.closest('#img-toolbar')) {
+                    if(activeImage) activeImage.classList.remove('selected-img');
+                    activeImage = null;
+                    tb.classList.remove('active');
+                }
+            }
+        });
+
+        function setImgFit(fit) {
+            if(activeImage) { activeImage.style.objectFit = fit; updateDataFromInputs(); triggerUpdate(); }
+        }
+        function changeImgWidth(amt) {
+            if(activeImage) { 
+                let currentW = activeImage.clientWidth;
+                activeImage.style.width = (currentW + amt) + 'px';
+                updateDataFromInputs(); 
+                triggerUpdate();
+            }
+        }
+        function changeImgHeight(amt) {
+            if(activeImage) { 
+                let currentH = activeImage.clientHeight;
+                activeImage.style.height = (currentH + amt) + 'px';
+                updateDataFromInputs(); 
+                triggerUpdate();
+            }
+        }
 
         function createNewPost() { siteData.posts.unshift({ id: Date.now(), slug: "new-story", title: "New Story", category: "General", readTime: "5 min", date: "Jan 1, 2025", image: "https://via.placeholder.com/300", summary: "...", content: "<p>Start writing...</p>" }); renderSidebar(); loadPost(0); }
         function createNewProduct() { siteData.products.unshift({ title: "New Item", brand: "Brand", image: "https://via.placeholder.com/300", link: "#" }); renderSidebar(); loadProduct(0); }
-        function deleteItem(type, index, e) { e.stopPropagation(); if(confirm("Delete this item?")) { if(type === 'post') siteData.posts.splice(index, 1); if(type === 'product') siteData.products.splice(index, 1); renderSidebar(); document.getElementById('editor-panel').innerHTML = ''; } }
+        function deleteItem(type, index, e) { e.stopPropagation(); if(confirm("Delete this item?")) { if(type === 'post') siteData.posts.splice(index, 1); if(type === 'product') siteData.products.splice(index, 1); renderSidebar(); document.getElementById('editor-panel').innerHTML = ''; updatePreview(); } }
 
         async function saveData() {
             const dataStr = "var siteData = " + JSON.stringify(siteData, null, 4) + ";";

@@ -140,7 +140,7 @@
 
     <div id="modal-generic" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true">
         <div class="fixed inset-0 bg-[#4E3629] bg-opacity-90 backdrop-blur-sm" onclick="closeGenericModal()"></div>
-        <div class="fixed inset-0 z-10 overflow-y-auto modal-scroll">
+        <div class="fixed inset-0 z-10 overflow-y-auto modal-scroll" onclick="if(event.target === this || event.target.classList.contains('min-h-full') || event.target.classList.contains('flex')) closeGenericModal()">
             <div class="flex min-h-full items-center justify-center p-4">
                 <div class="relative bg-[#E6DCD2] text-left shadow-2xl rounded-lg sm:w-full sm:max-w-3xl border-2 border-[#4E3629]">
                     <button class="absolute top-4 right-4 z-10 text-gray-600 hover:text-[#4E3629] text-4xl" onclick="closeGenericModal()">&times;</button>
@@ -161,7 +161,7 @@
 
     <div id="modal-all" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true">
         <div class="fixed inset-0 bg-[#4E3629] bg-opacity-90 backdrop-blur-sm" onclick="closeAllModal()"></div>
-        <div class="fixed inset-0 z-10 overflow-y-auto modal-scroll">
+        <div class="fixed inset-0 z-10 overflow-y-auto modal-scroll" onclick="if(event.target === this || event.target.classList.contains('min-h-full') || event.target.classList.contains('flex')) closeAllModal()">
             <div class="flex min-h-full items-center justify-center p-4">
                 <div class="relative bg-[#E6DCD2] text-left shadow-2xl rounded-lg sm:w-full sm:max-w-5xl border-2 border-[#4E3629] p-8">
                     <button class="absolute top-4 right-4 text-gray-600 hover:text-[#4E3629] text-4xl" onclick="closeAllModal()">&times;</button>
@@ -191,21 +191,33 @@
             
             renderContent();
 
-            // DEEP LINKING LOGIC
-            const urlParams = new URLSearchParams(window.location.search);
-            let targetIndex = -1;
-
-            if (urlParams.has('post')) {
-                const val = urlParams.get('post');
-                targetIndex = findPostIndex(val);
-            } else {
-                const pathSlug = window.location.pathname.substring(1); 
-                if(pathSlug && pathSlug.toLowerCase() !== 'index.html' && pathSlug !== '') {
-                    targetIndex = findPostIndex(pathSlug);
-                }
-            }
-
             if (targetIndex !== -1) openPost(targetIndex);
+
+            // Back button handling
+            window.addEventListener('popstate', function(e) {
+                if (e.state && e.state.path) {
+                    const urlParams = new URLSearchParams(e.state.path.includes('?') ? e.state.path.split('?')[1] : "");
+                    let idx = -1;
+                    if (urlParams.has('post')) {
+                        idx = findPostIndex(urlParams.get('post'));
+                    } else {
+                        const pathString = e.state.path.split('?')[0];
+                        const pathParts = pathString.split('/');
+                        const pathSlug = pathParts[pathParts.length - 1]; 
+                        if(pathSlug && pathSlug.toLowerCase() !== 'index.html' && pathSlug !== '') {
+                            idx = findPostIndex(pathSlug);
+                        }
+                    }
+                    if(idx !== -1) {
+                        openPost(idx, false);
+                    } else {
+                        closeGenericModal(false);
+                    }
+                } else {
+                    closeGenericModal(false);
+                    closeAllModal();
+                }
+            });
         });
 
         window.addEventListener('message', function(event) {
@@ -311,21 +323,23 @@
         }
 
         // --- MODALS ---
-        function openPost(index) {
+        function openPost(index, pushState = true) {
             activePostIndex = index;
             const post = activeData.posts[index];
             updateModalContent(post, true, true);
             document.getElementById('modal-generic').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
 
-            let newUrl;
-            const slug = post.slug || index;
-            if (window.location.search.includes('post=')) {
-                 newUrl = `${window.location.pathname}?post=${slug}`;
-            } else {
-                 newUrl = slug.toString(); 
+            if (pushState) {
+                let newUrl;
+                const slug = post.slug || index;
+                if (window.location.search.includes('post=')) {
+                     newUrl = `${window.location.pathname}?post=${slug}`;
+                } else {
+                     newUrl = slug.toString(); 
+                }
+                window.history.pushState({ path: newUrl }, '', newUrl);
             }
-            window.history.pushState({ path: newUrl }, '', newUrl);
         }
 
         function openFamilyModal() {
@@ -363,6 +377,11 @@
             document.getElementById('modal-title').innerText = data.title;
             document.getElementById('modal-body').innerHTML = data.content;
             
+            // force all links to open in a new tab
+            document.getElementById('modal-body').querySelectorAll('a').forEach(a => {
+                a.setAttribute('target', '_blank');
+            });
+            
             const metaDiv = document.getElementById('modal-meta');
             if(showMeta) {
                 metaDiv.style.display = 'flex';
@@ -373,11 +392,13 @@
             }
         }
 
-        function closeGenericModal() {
+        function closeGenericModal(pushState = true) {
             activePostIndex = null;
             document.getElementById('modal-generic').classList.add('hidden');
             document.body.style.overflow = 'auto';
-            window.history.pushState({ path: '/' }, '', '/');
+            if (pushState) {
+                window.history.pushState({ path: '/' }, '', '/');
+            }
         }
 
         function openAllModal(type) {
