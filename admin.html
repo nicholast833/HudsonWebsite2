@@ -1,107 +1,430 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Hudson Admin Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="content.js"></script>
     <style>
-        body { margin: 0; padding: 0; overflow: hidden; background: #f3f4f6; font-family: sans-serif; }
-        #main-container { display: flex; height: calc(100vh - 80px); width: 100vw; overflow: hidden; }
-        .panel-left { display: flex; width: 50%; min-width: 350px; padding: 15px; gap: 15px; flex-direction: row; }
-        .panel-right { flex: 1; min-width: 300px; background: white; position: relative; border-left: 1px solid #ccc; }
-        .resizer { width: 8px; cursor: col-resize; background-color: #d1d5db; border-left: 1px solid #9ca3af; border-right: 1px solid #9ca3af; display: flex; align-items: center; justify-content: center; z-index: 50; }
-        .resizer:hover, .resizer.active { background-color: #4E3629; }
-        .iframe-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 20; }
-        
-        .toolbar { display: flex; flex-wrap: wrap; gap: 5px; background: #e5e7eb; padding: 8px; border-radius: 6px 6px 0 0; border: 1px solid #ccc; border-bottom: none; }
-        .tool-btn { background: white; border: 1px solid #ccc; cursor: pointer; padding: 4px 8px; border-radius: 4px; font-size: 14px; min-width: 32px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; color: #374151; }
-        .tool-btn:hover { background: #4E3629; color: white; border-color: #4E3629; }
-        .editor-box { min-height: 150px; border: 1px solid #ccc; padding: 20px; background: white; border-radius: 0 0 6px 6px; overflow-y: auto; height: 50vh; max-height: none; font-family: 'Georgia', serif; line-height: 1.6; resize: vertical; }
-        .editor-box:focus { outline: 2px solid #4E3629; outline-offset: -2px; }
-        .editor-box img { max-width: 100%; display: inline-block; cursor: pointer; transition: outline 0.2s; }
-        .editor-box img.selected-img { outline: 3px solid #4E3629; }
-        
-        #img-toolbar { display: none; position: absolute; background: white; border: 1px solid #ccc; padding: 4px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 9999; gap: 4px; flex-wrap: wrap; max-width: 250px; }
-        #img-toolbar.active { display: flex; }
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #f3f4f6;
+            font-family: sans-serif;
+        }
 
-        .draggable-item { transition: all 0.2s; border: 1px solid transparent; background: white; }
-        .draggable-item:hover { background-color: #f3f4f6; border-color: #d1d5db; }
-        .dragging { opacity: 0.5; background: #e5e7eb; border: 2px dashed #4E3629; }
-        .drag-over { border-top: 2px solid #4E3629; }
-        
-        input[type="file"] { display: none; }
-        .custom-file-upload { display: inline-block; padding: 6px 12px; cursor: pointer; background: #4E3629; color: white; border-radius: 4px; font-size: 0.8em; }
-        select.tool-select { height: 30px; border: 1px solid #ccc; border-radius: 4px; padding: 0 5px; cursor: pointer; }
+        #main-container {
+            display: flex;
+            height: calc(100vh - 80px);
+            width: 100vw;
+            overflow: hidden;
+            padding: 15px;
+            gap: 10px;
+        }
+
+        /* Collapsible Layout Helpers */
+        .pane-wrapper {
+            position: relative;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            height: 100%;
+            flex: 1 1 0%;
+        }
+
+        .pane-wrapper.collapsed {
+            flex: 0 0 0px !important;
+            min-width: 0 !important;
+            margin-right: -15px;
+        }
+
+        .pane-inner {
+            width: 100%;
+            height: 100%;
+            background: white;
+            border-radius: 0.25rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .pane-wrapper.collapsed>.pane-inner {
+            width: 0;
+            opacity: 0;
+            pointer-events: none;
+            border: none;
+            padding: 0 !important;
+        }
+
+        .preview-wrapper {
+            width: 100%;
+            height: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .preview-wrapper.collapsed {
+            width: 0 !important;
+        }
+
+        .collapse-btn {
+            position: absolute;
+            z-index: 60;
+            width: 24px;
+            height: 24px;
+            background: #4E3629;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            border: 2px solid white;
+            transition: background 0.2s;
+        }
+
+        .collapse-btn:hover {
+            background: #36251b;
+        }
+
+        .collapse-btn.left-pane-btn {
+            right: -12px;
+        }
+
+        .collapse-btn.right-pane-btn {
+            left: -12px;
+        }
+
+        .resizer {
+            width: 10px;
+            cursor: col-resize;
+            background-color: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            margin: 0 -5px;
+        }
+
+        .resizer:hover,
+        .resizer.active {
+            background-color: rgba(78, 54, 41, 0.1);
+        }
+
+        .iframe-overlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 20;
+        }
+
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            background: #e5e7eb;
+            padding: 8px;
+            border-radius: 6px 6px 0 0;
+            border: 1px solid #ccc;
+            border-bottom: none;
+        }
+
+        .tool-btn {
+            background: white;
+            border: 1px solid #ccc;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            min-width: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            color: #374151;
+        }
+
+        .tool-btn:hover {
+            background: #4E3629;
+            color: white;
+            border-color: #4E3629;
+        }
+
+        .editor-box {
+            min-height: 150px;
+            border: 1px solid #ccc;
+            padding: 20px;
+            background: white;
+            border-radius: 0 0 6px 6px;
+            overflow-y: auto;
+            height: 50vh;
+            max-height: none;
+            font-family: 'Georgia', serif;
+            line-height: 1.6;
+            resize: vertical;
+        }
+
+        /* MS Word Style Parity Undoing Tailwind Resets */
+        .editor-box p {
+            margin-bottom: 1rem;
+        }
+
+        .editor-box ul {
+            list-style-type: disc;
+            padding-left: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .editor-box ol {
+            list-style-type: decimal;
+            padding-left: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .editor-box h1,
+        .editor-box h2,
+        .editor-box h3,
+        .editor-box h4 {
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .editor-box h1 {
+            font-size: 2em;
+        }
+
+        .editor-box h2 {
+            font-size: 1.5em;
+        }
+
+        .editor-box h3 {
+            font-size: 1.17em;
+        }
+
+        .editor-box:focus {
+            outline: 2px solid #4E3629;
+            outline-offset: -2px;
+        }
+
+        .editor-box img {
+            max-width: 100%;
+            display: inline-block;
+            cursor: pointer;
+            transition: outline 0.2s;
+        }
+
+        .editor-box img.selected-img {
+            outline: 3px solid #4E3629;
+        }
+
+        #img-toolbar {
+            display: none;
+            position: absolute;
+            background: white;
+            border: 1px solid #ccc;
+            padding: 4px;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            z-index: 9999;
+            gap: 4px;
+            flex-wrap: wrap;
+            max-width: 250px;
+        }
+
+        #img-toolbar.active {
+            display: flex;
+        }
+
+        .draggable-item {
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            background: white;
+        }
+
+        .draggable-item:hover {
+            background-color: #f3f4f6;
+            border-color: #d1d5db;
+        }
+
+        .dragging {
+            opacity: 0.5;
+            background: #e5e7eb;
+            border: 2px dashed #4E3629;
+        }
+
+        .drag-over {
+            border-top: 2px solid #4E3629;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .custom-file-upload {
+            display: inline-block;
+            padding: 6px 12px;
+            cursor: pointer;
+            background: #4E3629;
+            color: white;
+            border-radius: 4px;
+            font-size: 0.8em;
+        }
+
+        select.tool-select {
+            height: 30px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 0 5px;
+            cursor: pointer;
+        }
     </style>
 </head>
+
 <body class="bg-gray-200">
 
     <div class="h-20 bg-white flex justify-between items-center px-6 shadow-md z-30 relative">
         <h1 class="text-2xl font-bold text-[#4E3629]">How's Hudson Admin</h1>
         <div class="flex gap-4">
-            <button onclick="togglePreview()" id="btn-toggle" class="px-4 py-2 rounded bg-[#4E3629] text-white text-sm font-bold shadow transition">Toggle Full Preview</button>
-            <button onclick="saveData()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded shadow font-bold transition">💾 Save Changes</button>
+            <button onclick="reopenAllTabs()"
+                class="px-4 py-2 rounded bg-[#4E3629] text-white text-sm font-bold shadow transition hover:bg-[#36251b]">Reopen
+                All Tabs</button>
+            <button onclick="togglePreview()" id="btn-toggle"
+                class="px-4 py-2 rounded bg-[#4E3629] text-white text-sm font-bold shadow transition hover:bg-[#36251b]">Toggle
+                Full
+                Preview</button>
+            <button onclick="saveData()"
+                class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded shadow font-bold transition">💾 Save
+                Changes</button>
         </div>
     </div>
 
     <div id="main-container">
-        <div id="left-pane" class="panel-left">
-            <div class="w-1/3 bg-white p-4 rounded shadow flex flex-col h-full overflow-hidden">
+        <div id="pane-content-wrap" class="pane-wrapper">
+            <div class="pane-inner p-4">
                 <h2 class="font-bold text-lg mb-2 text-[#4E3629]">Content</h2>
                 <div class="overflow-y-auto flex-1 pr-1">
-                    <p class="text-xs text-gray-500 mb-2 uppercase font-bold tracking-wider">Site Settings</p>
-                    <div class="space-y-1 mb-4">
-                        <div onclick="loadHighlights()" class="p-2 rounded bg-gray-50 hover:bg-gray-200 cursor-pointer text-sm font-bold text-gray-700">✨ Edit Highlights Section</div>
-                        <div onclick="loadEssentials()" class="p-2 rounded bg-gray-50 hover:bg-gray-200 cursor-pointer text-sm font-bold text-gray-700">🛍️ Edit Essentials Section</div>
-                        <div onclick="loadStory()" class="p-2 rounded bg-gray-50 hover:bg-gray-200 cursor-pointer text-sm font-bold text-gray-700">📖 Edit Hudson's Story</div>
-                        <div onclick="loadFamily()" class="p-2 rounded bg-gray-50 hover:bg-gray-200 cursor-pointer text-sm font-bold text-gray-700">👥 Edit Family Section</div>
-                        <div onclick="loadFooter()" class="p-2 rounded bg-gray-50 hover:bg-gray-200 cursor-pointer text-sm font-bold text-gray-700">🔗 Edit Footer & Socials</div>
+                    <div class="cursor-pointer flex justify-between items-center mb-2"
+                        onclick="toggleSidebarSection('settings-section', this)">
+                        <p class="text-xs text-gray-500 uppercase font-bold tracking-wider m-0">Site Settings</p>
+                        <span class="text-gray-400 text-xs transform transition-transform duration-200">&#9660;</span>
+                    </div>
+                    <div id="settings-section" class="space-y-1 mb-4 overflow-hidden transition-all duration-300">
+                        <div onclick="loadHighlights()"
+                            class="p-2 rounded bg-gray-50 hover:bg-gray-200 cursor-pointer text-sm font-bold text-gray-700">
+                            ✨ Edit Highlights Section</div>
+                        <div onclick="loadEssentials()"
+                            class="p-2 rounded bg-gray-50 hover:bg-gray-200 cursor-pointer text-sm font-bold text-gray-700">
+                            🛍️ Edit Essentials Section</div>
+                        <div onclick="loadStory()"
+                            class="p-2 rounded bg-gray-50 hover:bg-gray-200 cursor-pointer text-sm font-bold text-gray-700">
+                            📖 Edit Hudson's Story</div>
+                        <div onclick="loadFamily()"
+                            class="p-2 rounded bg-gray-50 hover:bg-gray-200 cursor-pointer text-sm font-bold text-gray-700">
+                            👥 Edit Family Section</div>
+                        <div onclick="loadFooter()"
+                            class="p-2 rounded bg-gray-50 hover:bg-gray-200 cursor-pointer text-sm font-bold text-gray-700">
+                            🔗 Edit Footer & Socials</div>
                     </div>
 
-                    <p class="text-xs text-gray-500 mb-2 uppercase font-bold tracking-wider">Posts</p>
-                    <div id="post-list" class="space-y-1 mb-4"></div>
-                    <button onclick="createNewPost()" class="w-full bg-[#E6DCD2] text-[#4E3629] py-2 rounded text-sm font-bold hover:bg-[#d4c5b5] mb-4">+ New Post</button>
+                    <div class="cursor-pointer flex justify-between items-center mb-2"
+                        onclick="toggleSidebarSection('posts-section', this)">
+                        <p class="text-xs text-gray-500 uppercase font-bold tracking-wider m-0">Posts</p>
+                        <span class="text-gray-400 text-xs transform transition-transform duration-200">&#9660;</span>
+                    </div>
+                    <div id="posts-section" class="mb-4 overflow-hidden transition-all duration-300">
+                        <div id="post-list" class="space-y-1 mb-2"></div>
+                        <button onclick="createNewPost()"
+                            class="w-full bg-[#E6DCD2] text-[#4E3629] py-2 rounded text-sm font-bold hover:bg-[#d4c5b5]">+
+                            New Post</button>
+                    </div>
 
-                    <p class="text-xs text-gray-500 mb-2 uppercase font-bold tracking-wider">Products</p>
-                    <div id="product-list" class="space-y-1 mb-4"></div>
-                    <button onclick="createNewProduct()" class="w-full bg-[#E6DCD2] text-[#4E3629] py-2 rounded text-sm font-bold hover:bg-[#d4c5b5]">+ New Product</button>
+                    <div class="cursor-pointer flex justify-between items-center mb-2"
+                        onclick="toggleSidebarSection('products-section', this)">
+                        <p class="text-xs text-gray-500 uppercase font-bold tracking-wider m-0">Products</p>
+                        <span class="text-gray-400 text-xs transform transition-transform duration-200">&#9660;</span>
+                    </div>
+                    <div id="products-section" class="mb-4 overflow-hidden transition-all duration-300">
+                        <div id="product-list" class="space-y-1 mb-2"></div>
+                        <button onclick="createNewProduct()"
+                            class="w-full bg-[#E6DCD2] text-[#4E3629] py-2 rounded text-sm font-bold hover:bg-[#d4c5b5]">+
+                            New Product</button>
+                    </div>
                 </div>
             </div>
-
-            <div class="w-2/3 bg-white p-4 rounded shadow h-full overflow-y-auto" id="editor-wrapper">
-                <div id="editor-panel">
-                    <div class="flex flex-col items-center justify-center h-full text-gray-400"><p>Select an item from the left to start editing.</p></div>
-                </div>
+            <div onclick="togglePane('pane-content-wrap', this, '◀', '▶')"
+                onmousedown="startResize(event, 'pane-content-wrap', 'pane-editor-wrap')"
+                class="collapse-btn left-pane-btn" style="top: 20px;">◀
             </div>
         </div>
 
-        <div class="resizer" id="dragMe"><div class="h-8 w-1 bg-gray-400 rounded"></div></div>
+        <div class="resizer" id="resizer-1" onmousedown="startResize(event, 'pane-content-wrap', 'pane-editor-wrap')">
+        </div>
 
-        <div id="right-pane" class="panel-right">
-            <div id="iframe-blocker" class="iframe-overlay"></div>
-            <div class="absolute top-0 left-0 bg-[#4E3629] text-white text-xs px-2 py-1 z-10 opacity-90 shadow">Live Preview</div>
-            <iframe id="preview-frame" src="Index.html" class="w-full h-full border-none block"></iframe>
+        <div id="pane-editor-wrap" class="pane-wrapper">
+            <div class="pane-inner p-4 overflow-y-auto">
+                <div id="editor-panel">
+                    <div class="flex flex-col items-center justify-center h-full text-gray-400">
+                        <p>Select an item from the left to start editing.</p>
+                    </div>
+                </div>
+            </div>
+            <div onclick="togglePane('pane-editor-wrap', this, '◀', '▶')"
+                onmousedown="startResize(event, 'pane-editor-wrap', 'pane-preview-wrap')"
+                class="collapse-btn left-pane-btn" style="top: 60px;">◀
+            </div>
+        </div>
+
+        <div class="resizer" id="resizer-2" onmousedown="startResize(event, 'pane-editor-wrap', 'pane-preview-wrap')">
+        </div>
+
+        <div id="pane-preview-wrap" class="pane-wrapper">
+            <div onclick="togglePane('pane-preview-wrap', this, '▶', '◀')"
+                onmousedown="startResize(event, 'pane-editor-wrap', 'pane-preview-wrap')"
+                class="collapse-btn right-pane-btn" style="top: 100px;">▶</div>
+            <div class="pane-inner">
+                <div id="iframe-blocker" class="iframe-overlay"></div>
+                <div class="absolute top-0 left-0 bg-[#4E3629] text-white text-xs px-2 py-1 z-10 opacity-90 shadow">
+                    Live
+                    Preview</div>
+                <iframe id="preview-frame" src="Index.html" class="w-full h-full border-none block"></iframe>
+            </div>
         </div>
     </div>
 
     <div id="img-toolbar">
-        <button onclick="setImgFit('fill')" class="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded border">Stretch</button>
-        <button onclick="setImgFit('cover')" class="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded border">Crop</button>
-        <button onclick="setImgFit('contain')" class="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded border">Contain</button>
-        <button onclick="changeImgWidth(20)" class="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded border">W+</button>
-        <button onclick="changeImgWidth(-20)" class="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded border">W-</button>
-        <button onclick="changeImgHeight(20)" class="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded border">H+</button>
-        <button onclick="changeImgHeight(-20)" class="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded border">H-</button>
+        <button onclick="setImgFit('fill')"
+            class="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded border">Stretch</button>
+        <button onclick="setImgFit('cover')"
+            class="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded border">Crop</button>
+        <button onclick="setImgFit('contain')"
+            class="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded border">Contain</button>
+        <button onclick="changeImgWidth(20)"
+            class="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded border">W+</button>
+        <button onclick="changeImgWidth(-20)"
+            class="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded border">W-</button>
+        <button onclick="changeImgHeight(20)"
+            class="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded border">H+</button>
+        <button onclick="changeImgHeight(-20)"
+            class="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded border">H-</button>
     </div>
 
     <script>
         // INIT
         if (typeof siteData === 'undefined') {
-             var siteData = { posts: [], products: [] }; 
-             console.warn("siteData not found. Initializing empty.");
+            var siteData = { posts: [], products: [] };
+            console.warn("siteData not found. Initializing empty.");
         }
-        
+
         // DEFAULTS
         if (!siteData.highlights) siteData.highlights = { title: "Highlights", disclaimer: "" };
         if (!siteData.essentials) siteData.essentials = { title: "Essentials", disclaimer: "(Disclosure: As an Amazon Associate, I earn from qualifying purchases.)" };
@@ -115,16 +438,131 @@
 
         function triggerUpdate() { clearTimeout(debounceTimer); debounceTimer = setTimeout(() => { updatePreview(); }, 300); }
 
-        const resizer = document.getElementById('dragMe');
-        const leftPane = document.getElementById('left-pane');
         const blocker = document.getElementById('iframe-blocker');
-        let isResizing = false;
-        resizer.addEventListener('mousedown', function(e) { isResizing = true; resizer.classList.add('active'); blocker.style.display = 'block'; document.body.style.cursor = 'col-resize'; document.addEventListener('mousemove', handleMouseMove); document.addEventListener('mouseup', handleMouseUp); });
-        function handleMouseMove(e) { if (!isResizing) return; const containerWidth = document.body.clientWidth; const newLeftWidth = (e.clientX / containerWidth) * 100; if (newLeftWidth > 15 && newLeftWidth < 85) leftPane.style.width = newLeftWidth + '%'; }
-        function handleMouseUp() { isResizing = false; resizer.classList.remove('active'); blocker.style.display = 'none'; document.body.style.cursor = 'default'; document.removeEventListener('mousemove', handleMouseMove); document.removeEventListener('mouseup', handleMouseUp); }
+        let dragWasResizing = false;
+        let dragStartX = 0;
+        let draggedPane1 = null;
+        let draggedPane2 = null;
+        let draggedPane1StartWidth = 0;
+        let draggedPane2StartWidth = 0;
+
+        function startResize(e, pane1Id, pane2Id) {
+            dragWasResizing = false;
+            dragStartX = e.clientX;
+            draggedPane1 = document.getElementById(pane1Id);
+            draggedPane2 = document.getElementById(pane2Id);
+            if (!draggedPane1 || !draggedPane2) return;
+
+            if (draggedPane1.classList.contains('collapsed') || draggedPane2.classList.contains('collapsed')) return;
+
+            const tabs = [document.getElementById('pane-content-wrap'), document.getElementById('pane-editor-wrap'), document.getElementById('pane-preview-wrap')];
+            const openTabs = tabs.filter(t => !t.classList.contains('collapsed'));
+            openTabs.forEach(t => {
+                const w = t.offsetWidth;
+                t.style.flex = `${w} 1 0%`;
+            });
+
+            draggedPane1StartWidth = draggedPane1.offsetWidth;
+            draggedPane2StartWidth = draggedPane2.offsetWidth;
+
+            if (blocker) blocker.style.display = 'block';
+            document.body.style.cursor = 'col-resize';
+
+            document.addEventListener('mousemove', handleResizeMove);
+            document.addEventListener('mouseup', handleResizeUp);
+        }
+
+        function handleResizeMove(e) {
+            if (Math.abs(e.clientX - dragStartX) > 4) {
+                dragWasResizing = true;
+            }
+            if (!dragWasResizing) return;
+
+            const deltaX = e.clientX - dragStartX;
+
+            let newW1 = draggedPane1StartWidth + deltaX;
+            let newW2 = draggedPane2StartWidth - deltaX;
+
+            if (newW1 > 50 && newW2 > 50) {
+                draggedPane1.style.flex = `${newW1} 1 0%`;
+                draggedPane2.style.flex = `${newW2} 1 0%`;
+            }
+        }
+
+        function handleResizeUp(e) {
+            document.body.style.cursor = 'default';
+            if (blocker) blocker.style.display = 'none';
+            document.removeEventListener('mousemove', handleResizeMove);
+            document.removeEventListener('mouseup', handleResizeUp);
+            setTimeout(() => { dragWasResizing = false; }, 50);
+        }
+
+        function equalizeOpenTabs() {
+            const tabs = [document.getElementById('pane-content-wrap'), document.getElementById('pane-editor-wrap'), document.getElementById('pane-preview-wrap')];
+            const openTabs = tabs.filter(t => !t.classList.contains('collapsed'));
+            openTabs.forEach(t => {
+                t.style.flex = '1 1 0%';
+            });
+        }
+
+        function reopenAllTabs() {
+            const tabs = [document.getElementById('pane-content-wrap'), document.getElementById('pane-editor-wrap'), document.getElementById('pane-preview-wrap')];
+            tabs.forEach(t => {
+                t.classList.remove('collapsed');
+                t.style.flex = '1 1 0%';
+            });
+
+            document.querySelectorAll('.collapse-btn.left-pane-btn').forEach(btn => btn.innerText = '◀');
+            document.querySelector('.collapse-btn.right-pane-btn').innerText = '▶';
+
+            if (isFullPreview) togglePreview();
+        }
+
+        function toggleSidebarSection(id, headerEl) {
+            const el = document.getElementById(id);
+            const icon = headerEl.querySelector('span');
+            if (el.style.display === 'none') {
+                el.style.display = 'block';
+                icon.style.transform = 'rotate(0deg)';
+            } else {
+                el.style.display = 'none';
+                icon.style.transform = 'rotate(-90deg)';
+            }
+        }
 
         let isFullPreview = false;
-        function togglePreview() { isFullPreview = !isFullPreview; const btn = document.getElementById('btn-toggle'); if (isFullPreview) { leftPane.style.display = 'none'; resizer.style.display = 'none'; btn.innerText = "Exit Full Preview"; btn.classList.replace('bg-[#4E3629]', 'bg-gray-500'); } else { leftPane.style.display = 'flex'; resizer.style.display = 'flex'; btn.innerText = "Toggle Full Preview"; btn.classList.replace('bg-gray-500', 'bg-[#4E3629]'); } }
+        function togglePreview() {
+            isFullPreview = !isFullPreview;
+            const btn = document.getElementById('btn-toggle');
+
+            const paneContent = document.getElementById('pane-content-wrap');
+            const paneEditor = document.getElementById('pane-editor-wrap');
+            const resizer1 = document.getElementById('resizer-1');
+            const resizer2 = document.getElementById('resizer-2');
+            const panePreview = document.getElementById('pane-preview-wrap');
+
+            if (isFullPreview) {
+                paneContent.style.display = 'none';
+                paneEditor.style.display = 'none';
+                resizer1.style.display = 'none';
+                resizer2.style.display = 'none';
+                panePreview.style.flex = '1 1 0%';
+                panePreview.classList.remove('collapsed');
+                document.querySelector('.collapse-btn.right-pane-btn').innerText = '▶';
+
+                btn.innerText = "Exit Full Preview";
+                btn.classList.replace('bg-[#4E3629]', 'bg-gray-500');
+            } else {
+                paneContent.style.display = 'flex';
+                paneEditor.style.display = 'flex';
+                resizer1.style.display = 'flex';
+                resizer2.style.display = 'flex';
+                equalizeOpenTabs();
+
+                btn.innerText = "Toggle Full Preview";
+                btn.classList.replace('bg-gray-500', 'bg-[#4E3629]');
+            }
+        }
 
         let currentEditingId = null;
         let currentType = null;
@@ -134,21 +572,36 @@
         function handleImageUpload(input, target) {
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
-                reader.onload = function(e) {
+                reader.onload = function (e) {
                     const base64String = e.target.result;
-                    if(currentType === 'post') siteData.posts[currentEditingId].image = base64String;
-                    if(currentType === 'product') siteData.products[currentEditingId].image = base64String;
-                    if(currentType === 'story') siteData.story.image = base64String;
-                    if(currentType === 'family') {
+                    if (currentType === 'post') {
+                        if (target === 'banner') {
+                            siteData.posts[currentEditingId].bannerImage = base64String;
+                        } else {
+                            siteData.posts[currentEditingId].image = base64String;
+                        }
+                    }
+                    if (currentType === 'product') siteData.products[currentEditingId].image = base64String;
+                    if (currentType === 'story') siteData.story.image = base64String;
+                    if (currentType === 'family') {
                         if (target === 'main') siteData.family.image = base64String;
                         if (target === 'modal') siteData.family.modalImage = base64String;
                     }
                     const previewId = target ? `img-preview-${target}` : 'img-preview';
                     const el = document.getElementById(previewId);
-                    if(el) el.src = base64String;
+                    if (el) el.src = base64String;
                     triggerUpdate();
                 };
                 reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function toggleBannerUpload() {
+            const isSame = document.getElementById('edit-banner-same').checked;
+            document.getElementById('banner-upload-section').style.display = isSame ? 'none' : 'flex';
+            if (isSame) {
+                siteData.posts[currentEditingId].bannerImage = null;
+                triggerUpdate();
             }
         }
 
@@ -156,7 +609,7 @@
             const postList = document.getElementById('post-list');
             const prodList = document.getElementById('product-list');
             postList.innerHTML = ''; prodList.innerHTML = '';
-            
+
             if (siteData.posts) siteData.posts.forEach((post, index) => postList.appendChild(createDraggableItem(post.title, index, 'post')));
             if (siteData.products) siteData.products.forEach((prod, index) => prodList.appendChild(createDraggableItem(prod.title, index, 'product')));
             updatePreview();
@@ -167,7 +620,7 @@
             div.className = "draggable-item p-2 rounded flex justify-between items-center text-sm cursor-pointer border border-gray-200 shadow-sm mb-1";
             div.draggable = true; div.dataset.index = index; div.dataset.type = type;
             div.innerHTML = `<div class="flex items-center w-full overflow-hidden pointer-events-none"><span class="drag-handle text-gray-400 mr-2">⋮⋮</span><span class="truncate select-none ml-2 text-gray-700 font-medium">${title}</span></div><span class="delete-btn text-xs text-red-400 font-bold px-2 hover:text-red-600 z-10" onclick="deleteItem('${type}', ${index}, event)">×</span>`;
-            div.onclick = (e) => { if(e.target.classList.contains('delete-btn')) return; if(type === 'post') loadPost(index); else loadProduct(index); };
+            div.onclick = (e) => { if (e.target.classList.contains('delete-btn')) return; if (type === 'post') loadPost(index); else loadProduct(index); };
             div.addEventListener('dragstart', handleDragStart); div.addEventListener('dragover', handleDragOver); div.addEventListener('drop', handleDrop);
             div.addEventListener('dragenter', (e) => div.classList.add('drag-over')); div.addEventListener('dragleave', (e) => div.classList.remove('drag-over'));
             return div;
@@ -184,24 +637,99 @@
 
         function loadHighlights() {
             currentType = 'highlights'; currentEditingId = null;
+            const pCount = siteData.highlights.count !== undefined ? siteData.highlights.count : 4;
+            const hSize = siteData.highlights.size || 'medium';
             document.getElementById('editor-panel').innerHTML = `
                 <h2 class="text-lg font-bold mb-3 text-[#4E3629] border-b pb-2">Edit Highlights Section</h2>
                 <div class="space-y-4">
                     <div><label class="text-xs font-bold uppercase text-gray-500">Section Title</label><input type="text" id="high-title" class="w-full border p-2 rounded text-sm" value="${siteData.highlights.title}"></div>
                     <div><label class="text-xs font-bold uppercase text-gray-500">Disclaimer / Subtitle</label><input type="text" id="high-disc" class="w-full border p-2 rounded text-sm" value="${siteData.highlights.disclaimer}" placeholder="Optional text underneath header"></div>
+                    <div class="bg-gray-50 p-3 rounded border">
+                        <label class="text-xs font-bold uppercase text-gray-600 mb-2 block">Display Settings</label>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <span class="text-xs text-gray-500">Posts on Home Page (0 to show all)</span>
+                                <input type="number" id="high-post-count" class="w-full border p-2 rounded text-sm" value="${pCount}" min="0">
+                            </div>
+                            <div>
+                                <span class="text-xs text-gray-500">Post Card Size</span>
+                                <select id="high-post-size" class="w-full border p-2 rounded text-sm" onchange="document.getElementById('high-custom-size-config').style.display = this.value === 'custom' ? 'block' : 'none'; window.updateDataFromInputs();">
+                                    <option value="small" ${hSize === 'small' ? 'selected' : ''}>Small</option>
+                                    <option value="medium" ${hSize === 'medium' ? 'selected' : ''}>Medium (Default)</option>
+                                    <option value="large" ${hSize === 'large' ? 'selected' : ''}>Large</option>
+                                    <option value="custom" ${hSize === 'custom' ? 'selected' : ''}>Custom</option>
+                                </select>
+                            </div>
+                            <div id="high-custom-size-config" style="display: ${hSize === 'custom' ? 'block' : 'none'};" class="col-span-2">
+                                <span class="text-xs text-gray-500">Custom Width (px)</span>
+                                <input type="number" id="high-custom-w" class="w-full border p-2 rounded text-sm" value="${siteData.highlights.customWidth || 300}">
+                            </div>
+                        </div>
+                    </div>
                 </div>`;
             attachListeners();
+            document.getElementById('high-post-count').addEventListener('input', updateDataFromInputs);
+            document.getElementById('high-post-size').addEventListener('change', updateDataFromInputs);
+            document.getElementById('high-custom-w').addEventListener('input', updateDataFromInputs);
         }
 
         function loadEssentials() {
             currentType = 'essentials'; currentEditingId = null;
+            const pCount = siteData.productSettings?.count !== undefined ? siteData.productSettings.count : 3;
+            const pSize = siteData.productSettings ? siteData.productSettings.size : 'medium';
+            const txtHeight = siteData.productSettings?.textHeight !== undefined ? siteData.productSettings.textHeight : 140;
             document.getElementById('editor-panel').innerHTML = `
                 <h2 class="text-lg font-bold mb-3 text-[#4E3629] border-b pb-2">Edit Essentials Section</h2>
                 <div class="space-y-4">
                     <div><label class="text-xs font-bold uppercase text-gray-500">Section Title</label><input type="text" id="ess-title" class="w-full border p-2 rounded text-sm" value="${siteData.essentials.title}"></div>
                     <div><label class="text-xs font-bold uppercase text-gray-500">Disclaimer Text</label><input type="text" id="ess-disc" class="w-full border p-2 rounded text-sm" value="${siteData.essentials.disclaimer}" placeholder="(Disclosure: As an Amazon Associate, I earn from qualifying purchases.)"></div>
+                    <div class="bg-gray-50 p-3 rounded border">
+                        <label class="text-xs font-bold uppercase text-gray-600 mb-2 block">Product Display Settings</label>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <span class="text-xs text-gray-500">Products on Home Page (0 to show all)</span>
+                                <input type="number" id="ess-prod-count" class="w-full border p-2 rounded text-sm" value="${pCount}" min="0">
+                            </div>
+                            <div>
+                                <span class="text-xs text-gray-500">Card Size</span>
+                                <select id="ess-prod-size" class="w-full border p-2 rounded text-sm" onchange="document.getElementById('custom-size-config').style.display = this.value === 'custom' ? 'grid' : 'none'; window.updateDataFromInputs();">
+                                    <option value="small" ${pSize === 'small' ? 'selected' : ''}>Small</option>
+                                    <option value="medium" ${pSize === 'medium' ? 'selected' : ''}>Medium</option>
+                                    <option value="large" ${pSize === 'large' ? 'selected' : ''}>Large</option>
+                                    <option value="custom" ${pSize === 'custom' ? 'selected' : ''}>Custom</option>
+                                </select>
+                            </div>
+                            <div id="custom-size-config" style="display: ${pSize === 'custom' ? 'grid' : 'none'};" class="col-span-2 grid-cols-2 gap-4">
+                                <div>
+                                    <span class="text-xs text-gray-500">Custom Width (px)</span>
+                                    <input type="number" id="ess-custom-w" class="w-full border p-2 rounded text-sm" value="${siteData.productSettings?.customWidth || 300}">
+                                </div>
+                                <div>
+                                    <span class="text-xs text-gray-500">Custom Height (px)</span>
+                                    <input type="number" id="ess-custom-h" class="w-full border p-2 rounded text-sm" value="${siteData.productSettings?.customHeight || 450}">
+                                </div>
+                            </div>
+                            <div class="col-span-2">
+                                <span class="text-xs text-gray-500">Text Box Height (px, 0 auto-fit, -1 none)</span>
+                                <input type="number" id="ess-text-h" class="w-full border p-2 rounded text-sm" value="${txtHeight}" min="-1">
+                            </div>
+                            <div class="col-span-2">
+                                <span class="text-xs text-gray-500">Image Fit Override</span>
+                                <select id="ess-img-fit" class="w-full border p-2 rounded text-sm">
+                                    <option value="cover" ${siteData.productSettings?.imageFit === 'cover' || !siteData.productSettings?.imageFit ? 'selected' : ''}>Crop to Fill (Cover - Default)</option>
+                                    <option value="contain" ${siteData.productSettings?.imageFit === 'contain' ? 'selected' : ''}>Fit Inside (Contain - Near Lossless)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                 </div>`;
             attachListeners();
+            document.getElementById('ess-prod-size').addEventListener('change', updateDataFromInputs);
+            document.getElementById('ess-prod-count').addEventListener('input', updateDataFromInputs);
+            document.getElementById('ess-custom-w').addEventListener('input', updateDataFromInputs);
+            document.getElementById('ess-custom-h').addEventListener('input', updateDataFromInputs);
+            document.getElementById('ess-text-h').addEventListener('input', updateDataFromInputs);
+            document.getElementById('ess-img-fit').addEventListener('change', updateDataFromInputs);
         }
 
         function loadStory() {
@@ -311,7 +839,7 @@
         }
 
         function updateFooterItem(index, key, val) { siteData.footer[index][key] = val; triggerUpdate(); }
-        function addFooterItem() { siteData.footer.push({platform: "New Link", url: "#"}); loadFooter(); triggerUpdate(); }
+        function addFooterItem() { siteData.footer.push({ platform: "New Link", url: "#" }); loadFooter(); triggerUpdate(); }
         function removeFooterItem(index) { siteData.footer.splice(index, 1); loadFooter(); triggerUpdate(); }
 
         function loadPost(index) {
@@ -327,7 +855,6 @@
                         <label class="text-xs font-bold uppercase text-blue-500 block mb-1">Link Slug (Friendly URL)</label>
                         <div class="flex gap-2">
                             <input type="text" id="edit-slug" class="flex-1 border p-2 rounded text-sm text-gray-600" value="${slug}" placeholder="e.g. hudson-swims">
-                            <button onclick="generateSlug()" class="text-xs bg-blue-100 text-blue-700 px-2 rounded hover:bg-blue-200" title="Generate from Title">🪄 Auto</button>
                         </div>
                         <p class="text-[10px] text-gray-400 mt-1">Visit directly: yoursite.com/index.html?post=${slug || index}</p>
                     </div>
@@ -336,7 +863,20 @@
                         <div><label class="text-xs font-bold uppercase text-gray-500">Date</label><input type="text" id="edit-date" class="w-full border p-2 rounded text-sm" value="${post.date}"></div>
                         <div><label class="text-xs font-bold uppercase text-gray-500">Category</label><input type="text" id="edit-cat" class="w-full border p-2 rounded text-sm" value="${post.category}"></div>
                     </div>
-                    <div class="bg-gray-100 p-2 rounded border border-gray-300"><label class="text-xs font-bold uppercase block mb-2 text-gray-500">Image</label><div class="flex items-center gap-3"><img id="img-preview" src="${post.image}" class="w-16 h-16 object-cover rounded bg-white border"><label class="custom-file-upload hover:bg-[#36251b]">Choose Image <input type="file" accept="image/*" onchange="handleImageUpload(this)"></label></div></div>
+                    <div class="bg-gray-100 p-2 rounded border border-gray-300"><label class="text-xs font-bold uppercase block mb-2 text-gray-500">Thumbnail Image (Shown on Card)</label><div class="flex items-center gap-3"><img id="img-preview" src="${post.image}" class="w-16 h-16 object-cover rounded bg-white border"><label class="custom-file-upload hover:bg-[#36251b]">Choose Image <input type="file" accept="image/*" onchange="handleImageUpload(this)"></label></div></div>
+                    
+                    <div class="bg-gray-100 p-2 rounded border border-gray-300">
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-xs font-bold uppercase text-gray-500">Banner Image (Top of Post)</label>
+                            <label class="text-xs flex items-center gap-1 cursor-pointer">
+                                <input type="checkbox" id="edit-banner-same" ${post.bannerImage ? '' : 'checked'} onchange="toggleBannerUpload()"> Use Thumbnail
+                            </label>
+                        </div>
+                        <div id="banner-upload-section" class="flex items-center gap-3" style="${post.bannerImage ? '' : 'display:none;'}">
+                            <img id="img-preview-banner" src="${post.bannerImage || post.image}" class="w-16 h-16 object-cover rounded bg-white border">
+                            <label class="custom-file-upload hover:bg-[#36251b]">Choose Image <input type="file" accept="image/*" onchange="handleImageUpload(this, 'banner')"></label>
+                        </div>
+                    </div>
                     <div><label class="text-xs font-bold uppercase text-gray-500 mb-1 block">Content</label>${getToolbarHTML()}<div id="edit-content" class="editor-box" contenteditable="true" onfocus="trackFocus('edit-content')">${post.content}</div></div>
                 </div>`;
             lastFocusedEditor = 'edit-content';
@@ -353,8 +893,10 @@
                     <div><label class="text-xs font-bold uppercase text-gray-500">Brand</label><input type="text" id="prod-brand" class="w-full border p-2 rounded text-sm" value="${prod.brand}"></div>
                     <div class="bg-gray-100 p-2 rounded border border-gray-300"><label class="text-xs font-bold uppercase block mb-2 text-gray-500">Image</label><div class="flex items-center gap-3"><img id="img-preview" src="${prod.image}" class="w-16 h-16 object-cover rounded bg-white border"><label class="custom-file-upload hover:bg-[#36251b]">Choose Image <input type="file" accept="image/*" onchange="handleImageUpload(this)"></label></div></div>
                     <div><label class="text-xs font-bold uppercase text-gray-500">Link</label><input type="text" id="prod-link" class="w-full border p-2 rounded text-sm" value="${prod.link}"></div>
+                    <div><label class="text-xs font-bold uppercase text-gray-500">Why Buy? (Description)</label><textarea id="prod-why" class="w-full border p-2 rounded text-sm h-24" placeholder="Briefly describe why to buy this...">${prod.whyBuy || ''}</textarea></div>
                 </div>`;
             attachListeners();
+            document.getElementById('prod-why').addEventListener('input', updateDataFromInputs);
         }
 
         function getToolbarHTML() {
@@ -382,6 +924,18 @@
                         <option value="4">4 Cols</option>
                     </select>
                 </div>
+                <div class="tool-group flex items-center gap-1 border-l pl-2 ml-1">
+                    <select onchange="setLineSpacing(this.value); this.value=''" class="tool-select text-xs" style="width: 80px;">
+                        <option value="">Spacing</option>
+                        <option value="1.0">Single</option>
+                        <option value="1.15">1.15</option>
+                        <option value="1.5">1.5</option>
+                        <option value="2.0">Double</option>
+                        <option value="add-before">Space Before</option>
+                        <option value="add-after">Space After</option>
+                        <option value="remove-space">Clear Space</option>
+                    </select>
+                </div>
             </div>`;
         }
 
@@ -395,7 +949,7 @@
         function generateSlug() {
             const titleInput = document.getElementById('edit-title');
             const slugInput = document.getElementById('edit-slug');
-            if(titleInput && slugInput) {
+            if (titleInput && slugInput) {
                 const raw = titleInput.value;
                 const slug = raw.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-');
                 slugInput.value = slug;
@@ -404,29 +958,43 @@
         }
 
         function updateDataFromInputs() {
-            if(currentType === 'post') {
+            if (currentType === 'post') {
                 const p = siteData.posts[currentEditingId];
                 p.title = document.getElementById('edit-title').value;
                 p.date = document.getElementById('edit-date').value;
                 p.category = document.getElementById('edit-cat').value;
                 p.content = document.getElementById('edit-content').innerHTML;
-                
-                const sInput = document.getElementById('edit-slug');
-                if(sInput) p.slug = sInput.value;
 
-                const sidebarItem = document.querySelector(`[data-index="${currentEditingId}"][data-type="post"] span.ml-2`); if(sidebarItem) sidebarItem.innerText = p.title;
+                const sInput = document.getElementById('edit-slug');
+                if (sInput) p.slug = sInput.value;
+
+                const sidebarItem = document.querySelector(`[data-index="${currentEditingId}"][data-type="post"] span.ml-2`); if (sidebarItem) sidebarItem.innerText = p.title;
             } else if (currentType === 'product') {
                 const p = siteData.products[currentEditingId];
                 p.title = document.getElementById('prod-title').value;
                 p.brand = document.getElementById('prod-brand').value;
                 p.link = document.getElementById('prod-link').value;
-                const sidebarItem = document.querySelector(`[data-index="${currentEditingId}"][data-type="product"] span.ml-2`); if(sidebarItem) sidebarItem.innerText = p.title;
+                p.whyBuy = document.getElementById('prod-why').value;
+                const sidebarItem = document.querySelector(`[data-index="${currentEditingId}"][data-type="product"] span.ml-2`); if (sidebarItem) sidebarItem.innerText = p.title;
             } else if (currentType === 'highlights') {
                 siteData.highlights.title = document.getElementById('high-title').value;
                 siteData.highlights.disclaimer = document.getElementById('high-disc').value;
+                siteData.highlights.count = parseInt(document.getElementById('high-post-count').value) || 0;
+                siteData.highlights.size = document.getElementById('high-post-size').value;
+                siteData.highlights.customWidth = parseInt(document.getElementById('high-custom-w').value) || 300;
             } else if (currentType === 'essentials') {
                 siteData.essentials.title = document.getElementById('ess-title').value;
                 siteData.essentials.disclaimer = document.getElementById('ess-disc').value;
+                if (!siteData.productSettings) siteData.productSettings = {};
+                siteData.productSettings.count = parseInt(document.getElementById('ess-prod-count').value) || 0;
+                siteData.productSettings.size = document.getElementById('ess-prod-size').value;
+
+                const cW = document.getElementById('ess-custom-w') ? parseInt(document.getElementById('ess-custom-w').value) : 300;
+                const cH = document.getElementById('ess-custom-h') ? parseInt(document.getElementById('ess-custom-h').value) : 450;
+                siteData.productSettings.customWidth = isNaN(cW) ? 300 : cW;
+                siteData.productSettings.customHeight = isNaN(cH) ? 450 : cH;
+                siteData.productSettings.textHeight = document.getElementById('ess-text-h') ? (parseInt(document.getElementById('ess-text-h').value) || 0) : 140;
+                siteData.productSettings.imageFit = document.getElementById('ess-img-fit') ? document.getElementById('ess-img-fit').value : 'cover';
             } else if (currentType === 'story') {
                 siteData.story.title = document.getElementById('story-title').value;
                 siteData.story.content = document.getElementById('edit-content').innerHTML;
@@ -440,21 +1008,21 @@
             } else if (currentType === 'legal-terms') {
                 siteData.footerText.terms = document.getElementById('edit-content').innerHTML;
             }
-            triggerUpdate(); 
+            triggerUpdate();
         }
 
-        function formatDoc(cmd, value=null) { 
-            if(lastFocusedEditor && document.getElementById(lastFocusedEditor)) {
+        function formatDoc(cmd, value = null) {
+            if (lastFocusedEditor && document.getElementById(lastFocusedEditor)) {
                 document.getElementById(lastFocusedEditor).focus();
             }
-            document.execCommand(cmd, false, value); 
-            updateDataFromInputs(); 
+            document.execCommand(cmd, false, value);
+            updateDataFromInputs();
         }
-        function addLink() { 
-            const url = prompt("Enter URL:", "https://"); 
+        function addLink() {
+            const url = prompt("Enter URL:", "https://");
             if (url) {
-                formatDoc('createLink', url); 
-                if(lastFocusedEditor && document.getElementById(lastFocusedEditor)) {
+                formatDoc('createLink', url);
+                if (lastFocusedEditor && document.getElementById(lastFocusedEditor)) {
                     document.getElementById(lastFocusedEditor).querySelectorAll('a:not([target])').forEach(a => {
                         a.setAttribute("target", "_blank");
                     });
@@ -466,7 +1034,7 @@
         function insertInlineImage(input) {
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
-                reader.onload = function(e) {
+                reader.onload = function (e) {
                     formatDoc('insertImage', e.target.result);
                 };
                 reader.readAsDataURL(input.files[0]);
@@ -477,31 +1045,31 @@
         function insertColumns(numCols) {
             if (!numCols) return;
             let colsHtml = `<div class="grid grid-cols-${numCols} gap-4 mb-4">`;
-            for(let i=0; i<numCols; i++) {
-                colsHtml += `<div class="border border-dashed border-gray-400 p-2 min-h-[50px]">Col ${i+1}</div>`;
+            for (let i = 0; i < numCols; i++) {
+                colsHtml += `<div class="border border-dashed border-gray-400 p-2 min-h-[50px]">Col ${i + 1}</div>`;
             }
             colsHtml += `</div><p><br></p>`;
             formatDoc('insertHTML', colsHtml);
         }
 
         let activeImage = null;
-        document.addEventListener('click', function(e) {
+        document.addEventListener('click', function (e) {
             const tb = document.getElementById('img-toolbar');
-            if(tb) {
-                if(e.target.tagName === 'IMG' && e.target.closest('.editor-box')) {
+            if (tb) {
+                if (e.target.tagName === 'IMG' && e.target.closest('.editor-box')) {
                     document.querySelectorAll('.editor-box img.selected-img').forEach(img => img.classList.remove('selected-img'));
                     activeImage = e.target;
                     activeImage.classList.add('selected-img');
-                    
+
                     const rect = activeImage.getBoundingClientRect();
                     tb.style.top = (window.scrollY + rect.top - tb.offsetHeight - 5) + 'px';
                     tb.style.left = (window.scrollX + rect.left) + 'px';
                     tb.classList.add('active');
-                    
-                    if(!activeImage.style.width) activeImage.style.width = activeImage.clientWidth + 'px';
-                    if(!activeImage.style.height) activeImage.style.height = activeImage.clientHeight + 'px';
+
+                    if (!activeImage.style.width) activeImage.style.width = activeImage.clientWidth + 'px';
+                    if (!activeImage.style.height) activeImage.style.height = activeImage.clientHeight + 'px';
                 } else if (!e.target.closest('#img-toolbar')) {
-                    if(activeImage) activeImage.classList.remove('selected-img');
+                    if (activeImage) activeImage.classList.remove('selected-img');
                     activeImage = null;
                     tb.classList.remove('active');
                 }
@@ -509,28 +1077,28 @@
         });
 
         function setImgFit(fit) {
-            if(activeImage) { activeImage.style.objectFit = fit; updateDataFromInputs(); triggerUpdate(); }
+            if (activeImage) { activeImage.style.objectFit = fit; updateDataFromInputs(); triggerUpdate(); }
         }
         function changeImgWidth(amt) {
-            if(activeImage) { 
+            if (activeImage) {
                 let currentW = activeImage.clientWidth;
                 activeImage.style.width = (currentW + amt) + 'px';
-                updateDataFromInputs(); 
+                updateDataFromInputs();
                 triggerUpdate();
             }
         }
         function changeImgHeight(amt) {
-            if(activeImage) { 
+            if (activeImage) {
                 let currentH = activeImage.clientHeight;
                 activeImage.style.height = (currentH + amt) + 'px';
-                updateDataFromInputs(); 
+                updateDataFromInputs();
                 triggerUpdate();
             }
         }
 
         function createNewPost() { siteData.posts.unshift({ id: Date.now(), slug: "new-story", title: "New Story", category: "General", readTime: "5 min", date: "Jan 1, 2025", image: "https://via.placeholder.com/300", summary: "...", content: "<p>Start writing...</p>" }); renderSidebar(); loadPost(0); }
-        function createNewProduct() { siteData.products.unshift({ title: "New Item", brand: "Brand", image: "https://via.placeholder.com/300", link: "#" }); renderSidebar(); loadProduct(0); }
-        function deleteItem(type, index, e) { e.stopPropagation(); if(confirm("Delete this item?")) { if(type === 'post') siteData.posts.splice(index, 1); if(type === 'product') siteData.products.splice(index, 1); renderSidebar(); document.getElementById('editor-panel').innerHTML = ''; updatePreview(); } }
+        function createNewProduct() { siteData.products.unshift({ title: "New Item", brand: "Brand", image: "https://via.placeholder.com/300", link: "#", whyBuy: "This is a great product because..." }); renderSidebar(); loadProduct(0); }
+        function deleteItem(type, index, e) { e.stopPropagation(); if (confirm("Delete this item?")) { if (type === 'post') siteData.posts.splice(index, 1); if (type === 'product') siteData.products.splice(index, 1); renderSidebar(); document.getElementById('editor-panel').innerHTML = ''; updatePreview(); } }
 
         async function saveData() {
             const dataStr = "var siteData = " + JSON.stringify(siteData, null, 4) + ";";
@@ -539,7 +1107,7 @@
                     const handle = await window.showSaveFilePicker({
                         id: 'hudson-admin-save',
                         suggestedName: 'content.js',
-                        types: [{ description: 'JavaScript File', accept: {'text/javascript': ['.js']} }],
+                        types: [{ description: 'JavaScript File', accept: { 'text/javascript': ['.js'] } }],
                     });
                     const writable = await handle.createWritable();
                     await writable.write(dataStr);
@@ -552,7 +1120,86 @@
             }
         }
 
+        function togglePane(paneId, btnElem, leftIcon, rightIcon) {
+            if (dragWasResizing) return;
+            const paneWrapper = document.getElementById(paneId);
+            paneWrapper.classList.toggle('collapsed');
+            if (paneWrapper.classList.contains('collapsed')) {
+                btnElem.innerText = rightIcon;
+            } else {
+                btnElem.innerText = leftIcon;
+            }
+            equalizeOpenTabs();
+        }
+
+        function togglePreviewPane(paneId, btnElem) {
+            togglePane(paneId, btnElem, '▶', '◀');
+        }
+
+        function applyStyle(node, prop, value) {
+            if (prop === 'lineHeight') {
+                node.style.lineHeight = value;
+            } else if (prop === 'marginBottom') {
+                node.style.marginBottom = value;
+            } else if (prop === 'marginTop') {
+                node.style.marginTop = value;
+            } else if (prop === 'removeSpacing') {
+                node.style.marginTop = '0';
+                node.style.marginBottom = '0';
+                node.style.lineHeight = '1.0';
+            }
+        }
+
+        function applyStyleToSelectedBlocks(styleProp, value) {
+            const editor = document.getElementById(lastFocusedEditor);
+            if (!editor) return;
+
+            const sel = window.getSelection();
+            if (sel.rangeCount === 0) return;
+            const range = sel.getRangeAt(0);
+
+            const blocks = Array.from(editor.querySelectorAll('p, div, h1, h2, h3, h4, h5, h6, li, blockquote'));
+            let modified = false;
+
+            if (range.collapsed) {
+                let node = sel.focusNode;
+                while (node && node !== editor && !['P', 'DIV', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'LI', 'BLOCKQUOTE'].includes(node.tagName)) {
+                    node = node.parentNode;
+                }
+                if (node && node !== editor) {
+                    applyStyle(node, styleProp, value);
+                    modified = true;
+                }
+            } else {
+                blocks.forEach(block => {
+                    if (sel.containsNode(block, true)) {
+                        applyStyle(block, styleProp, value);
+                        modified = true;
+                    }
+                });
+            }
+
+            if (!modified) {
+                document.execCommand('formatBlock', false, 'p');
+                applyStyleToSelectedBlocks(styleProp, value);
+                return;
+            }
+            updateDataFromInputs();
+        }
+
+        function setLineSpacing(val) {
+            if (!val) return;
+            if (lastFocusedEditor && document.getElementById(lastFocusedEditor)) {
+                document.getElementById(lastFocusedEditor).focus();
+            }
+            if (val === 'add-before') applyStyleToSelectedBlocks('marginTop', '1rem');
+            else if (val === 'add-after') applyStyleToSelectedBlocks('marginBottom', '1rem');
+            else if (val === 'remove-space') applyStyleToSelectedBlocks('removeSpacing', '');
+            else applyStyleToSelectedBlocks('lineHeight', val);
+        }
+
         setTimeout(() => { renderSidebar(); }, 500);
     </script>
 </body>
+
 </html>
